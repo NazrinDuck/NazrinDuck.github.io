@@ -24,7 +24,7 @@
 <meta property="og:type" content="article">
 <meta property="og:title" content="[2024 羊城杯] Pwn writeup(部分)">
 <meta property="og:url" content="http://example.com/2024/08/29/2024ycb/index.html">
-<meta property="og:site_name" content="Blog de NazrinDuck">
+<meta property="og:site_name" content="Blog de Назриндак">
 <meta property="og:description" content="pstack 漏洞分析 有两个qword的溢出，checksec发现无pie和canary,直接栈迁移 首先改rbp到bss段上，接着再返回vuln函数在bss段上读入ROP链，然后leave&amp;ret跳转到bss段ROP泄漏libc基址，最后再leave&amp;ret一下拿shell. 注意这个system(“&#x2F;bin&#x2F;sh”)需要很长的栈空间， 迁移的bss段地址要">
 <meta property="og:locale">
 <meta property="og:image" content="http://example.com/images/2024ycb/2024-08-29_11-28.png">
@@ -55,7 +55,7 @@
   };
 </script>
 
-  <title>[2024 羊城杯] Pwn writeup(部分) | Blog de NazrinDuck</title>
+  <title>[2024 羊城杯] Pwn writeup(部分) | Blog de Назриндак</title>
   
 
 
@@ -106,7 +106,7 @@
 
     <a href="/" class="brand" rel="start">
       <span class="logo-line-before"><i></i></span>
-      <h1 class="site-title">Blog de NazrinDuck</h1>
+      <h1 class="site-title">Blog de Назриндак</h1>
       <span class="logo-line-after"><i></i></span>
     </a>
       <p class="site-subtitle" itemprop="description">上不去下不来，卡在这了</p>
@@ -171,11 +171,11 @@
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.gif">
       <meta itemprop="name" content="NazrinDuck">
-      <meta itemprop="description" content="hamood? hammod? hammod!">
+      <meta itemprop="description" content="Fâtih'in İstanbul'u fethettiği yaştasın!">
     </span>
 
     <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Blog de NazrinDuck">
+      <meta itemprop="name" content="Blog de Назриндак">
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
@@ -326,7 +326,7 @@
       <div class="site-overview-wrap sidebar-panel">
         <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
   <p class="site-author-name" itemprop="name">NazrinDuck</p>
-  <div class="site-description" itemprop="description">hamood? hammod? hammod!</div>
+  <div class="site-description" itemprop="description">Fâtih'in İstanbul'u fethettiği yaştasın!</div>
 </div>
 <div class="site-state-wrap motion-element">
   <nav class="site-state">

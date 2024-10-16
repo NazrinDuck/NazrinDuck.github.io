@@ -20,12 +20,12 @@
     var CONFIG = {"hostname":"example.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
   </script>
 
-  <meta name="description" content="baby_cfhp 漏洞分析程序给了源码： 123456789101112131415161718192021222324#include &lt;stdint.h&gt;#include &lt;stdio.h&gt;#include &lt;stdlib.h&gt;#include &lt;string.h&gt;int main(void) &#123;  unsigned long ptr">
+  <meta name="description" content="baby_cfhp 🩸  这竟然让我拿了一血，不过后边还是被薄纱了  漏洞分析程序给了源码： 123456789101112131415161718192021222324#include &lt;stdint.h&gt;#include &lt;stdio.h&gt;#include &lt;stdlib.h&gt;#include &lt;string.h&gt;int main(void)">
 <meta property="og:type" content="article">
 <meta property="og:title" content="[TCP1P 2024] Pwn writeup(部分)">
 <meta property="og:url" content="http://example.com/2024/10/14/2024TCP1P/index.html">
-<meta property="og:site_name" content="Blog de NazrinDuck">
-<meta property="og:description" content="baby_cfhp 漏洞分析程序给了源码： 123456789101112131415161718192021222324#include &lt;stdint.h&gt;#include &lt;stdio.h&gt;#include &lt;stdlib.h&gt;#include &lt;string.h&gt;int main(void) &#123;  unsigned long ptr">
+<meta property="og:site_name" content="Blog de Назриндак">
+<meta property="og:description" content="baby_cfhp 🩸  这竟然让我拿了一血，不过后边还是被薄纱了  漏洞分析程序给了源码： 123456789101112131415161718192021222324#include &lt;stdint.h&gt;#include &lt;stdio.h&gt;#include &lt;stdlib.h&gt;#include &lt;string.h&gt;int main(void)">
 <meta property="og:locale">
 <meta property="og:image" content="http://example.com/images/2024TCP1P/sim1.png">
 <meta property="og:image" content="http://example.com/images/2024TCP1P/sim3.png">
@@ -35,7 +35,7 @@
 <meta property="og:image" content="http://example.com/images/2024TCP1P/amnesia2.png">
 <meta property="og:image" content="http://example.com/images/2024TCP1P/amnesia3.png">
 <meta property="article:published_time" content="2024-10-14T15:10:43.000Z">
-<meta property="article:modified_time" content="2024-10-14T16:28:06.663Z">
+<meta property="article:modified_time" content="2024-10-16T13:46:21.412Z">
 <meta property="article:author" content="NazrinDuck">
 <meta property="article:tag" content="CTF">
 <meta property="article:tag" content="pwn">
@@ -55,7 +55,7 @@
   };
 </script>
 
-  <title>[TCP1P 2024] Pwn writeup(部分) | Blog de NazrinDuck</title>
+  <title>[TCP1P 2024] Pwn writeup(部分) | Blog de Назриндак</title>
   
 
 
@@ -106,7 +106,7 @@
 
     <a href="/" class="brand" rel="start">
       <span class="logo-line-before"><i></i></span>
-      <h1 class="site-title">Blog de NazrinDuck</h1>
+      <h1 class="site-title">Blog de Назриндак</h1>
       <span class="logo-line-after"><i></i></span>
     </a>
       <p class="site-subtitle" itemprop="description">上不去下不来，卡在这了</p>
@@ -171,11 +171,11 @@
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.gif">
       <meta itemprop="name" content="NazrinDuck">
-      <meta itemprop="description" content="hamood? hammod? hammod!">
+      <meta itemprop="description" content="Fâtih'in İstanbul'u fethettiği yaştasın!">
     </span>
 
     <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Blog de NazrinDuck">
+      <meta itemprop="name" content="Blog de Назриндак">
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
@@ -196,7 +196,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-10-15 00:28:06" itemprop="dateModified" datetime="2024-10-15T00:28:06+08:00">2024-10-15</time>
+                <time title="Modified: 2024-10-16 21:46:21" itemprop="dateModified" datetime="2024-10-16T21:46:21+08:00">2024-10-16</time>
               </span>
 
           
@@ -210,7 +210,10 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <h1 id="baby-cfhp"><a href="#baby-cfhp" class="headerlink" title="baby_cfhp"></a>baby_cfhp</h1><hr>
+        <h1 id="baby-cfhp-🩸"><a href="#baby-cfhp-🩸" class="headerlink" title="baby_cfhp 🩸"></a>baby_cfhp 🩸</h1><hr>
+<blockquote>
+<p>这竟然让我拿了一血，不过后边还是被薄纱了</p>
+</blockquote>
 <h2 id="漏洞分析"><a href="#漏洞分析" class="headerlink" title="漏洞分析"></a>漏洞分析</h2><p>程序给了源码：</p>
 <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdint.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;string.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">(<span class="type">void</span>)</span> &#123;</span><br><span class="line">  <span class="type">unsigned</span> <span class="type">long</span> ptr;</span><br><span class="line">  <span class="type">int</span> idx, val;</span><br><span class="line">  <span class="built_in">printf</span>(<span class="string">&quot;address: &quot;</span>);</span><br><span class="line">  <span class="built_in">scanf</span>(<span class="string">&quot;%li&quot;</span>, &amp;ptr);</span><br><span class="line">  <span class="built_in">printf</span>(<span class="string">&quot;value: &quot;</span>);</span><br><span class="line">  <span class="built_in">scanf</span>(<span class="string">&quot;%i&quot;</span>, &amp;val);</span><br><span class="line"></span><br><span class="line">  ptr = (ptr &amp; ~((<span class="number">1</span> &lt;&lt; <span class="number">16</span>) - <span class="number">1</span>)) |</span><br><span class="line">        ((ptr &amp; <span class="number">0xff</span>) ^ ((val &amp; <span class="number">0xff</span>) ^ ((val &amp; <span class="number">0xff</span>) &gt;&gt; <span class="number">1</span>))) |</span><br><span class="line">        (ptr &amp; <span class="number">0xffff</span> &amp; ~<span class="number">0xff</span>);</span><br><span class="line">  <span class="built_in">exit</span>(<span class="number">0</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">__attribute__((constructor)) <span class="type">void</span> <span class="title function_">init</span><span class="params">(<span class="type">void</span>)</span> &#123;</span><br><span class="line">  setbuf(<span class="built_in">stdin</span>, <span class="literal">NULL</span>);</span><br><span class="line">  setbuf(<span class="built_in">stdout</span>, <span class="literal">NULL</span>);</span><br><span class="line">  setbuf(<span class="built_in">stderr</span>, <span class="literal">NULL</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
@@ -346,14 +349,14 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#baby-cfhp"><span class="nav-number">1.</span> <span class="nav-text">baby_cfhp</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90"><span class="nav-number">1.1.</span> <span class="nav-text">漏洞分析</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#exp"><span class="nav-number">1.2.</span> <span class="nav-text">exp</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#sim"><span class="nav-number">2.</span> <span class="nav-text">sim</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90-1"><span class="nav-number">2.1.</span> <span class="nav-text">漏洞分析</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#exp-1"><span class="nav-number">2.2.</span> <span class="nav-text">exp</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#amnesia"><span class="nav-number">3.</span> <span class="nav-text">amnesia</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90-2"><span class="nav-number">3.1.</span> <span class="nav-text">漏洞分析</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#exp-2"><span class="nav-number">3.2.</span> <span class="nav-text">exp</span></a></li></ol></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#baby-cfhp-%F0%9F%A9%B8"><span class="nav-number">1.</span> <span class="nav-text">baby_cfhp 🩸</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90"><span class="nav-number">1.1.</span> <span class="nav-text">漏洞分析</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#exp"><span class="nav-number">1.2.</span> <span class="nav-text">exp</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#sim"><span class="nav-number">2.</span> <span class="nav-text">sim</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90-1"><span class="nav-number">2.1.</span> <span class="nav-text">漏洞分析</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#exp-1"><span class="nav-number">2.2.</span> <span class="nav-text">exp</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#amnesia"><span class="nav-number">3.</span> <span class="nav-text">amnesia</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90-2"><span class="nav-number">3.1.</span> <span class="nav-text">漏洞分析</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#exp-2"><span class="nav-number">3.2.</span> <span class="nav-text">exp</span></a></li></ol></li></ol></div>
       </div>
       <!--/noindex-->
 
       <div class="site-overview-wrap sidebar-panel">
         <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
   <p class="site-author-name" itemprop="name">NazrinDuck</p>
-  <div class="site-description" itemprop="description">hamood? hammod? hammod!</div>
+  <div class="site-description" itemprop="description">Fâtih'in İstanbul'u fethettiği yaştasın!</div>
 </div>
 <div class="site-state-wrap motion-element">
   <nav class="site-state">

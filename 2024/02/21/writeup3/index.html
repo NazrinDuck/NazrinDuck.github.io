@@ -24,7 +24,7 @@
 <meta property="og:type" content="article">
 <meta property="og:title" content="[ctfshow] pwn 内部赛 flower write up">
 <meta property="og:url" content="http://example.com/2024/02/21/writeup3/index.html">
-<meta property="og:site_name" content="Blog de NazrinDuck">
+<meta property="og:site_name" content="Blog de Назриндак">
 <meta property="og:description" content="今天做了一下午的比较复杂的题，写一下wp，不能保证没有错误，欢迎大家指出 拿到题目后一开始还没意识到是花指令混淆反汇编，用pwndbg调试了很长时间，问了群里的大佬才意识到这点，事实上flower已经暗示了这个为花指令混淆； 首先file和checksec一下：   发现是一个静态编译的64位程序，而且开了NX堆栈不可执行； 静态编译程序无动态链接库，ret2libc是行不通的，考虑写入shell">
 <meta property="og:locale">
 <meta property="og:image" content="https://pic1.zhimg.com/80/v2-09a300ef6745694274091fd3d2eed160_1440w.webp">
@@ -69,7 +69,7 @@
   };
 </script>
 
-  <title>[ctfshow] pwn 内部赛 flower write up | Blog de NazrinDuck</title>
+  <title>[ctfshow] pwn 内部赛 flower write up | Blog de Назриндак</title>
   
 
 
@@ -120,7 +120,7 @@
 
     <a href="/" class="brand" rel="start">
       <span class="logo-line-before"><i></i></span>
-      <h1 class="site-title">Blog de NazrinDuck</h1>
+      <h1 class="site-title">Blog de Назриндак</h1>
       <span class="logo-line-after"><i></i></span>
     </a>
       <p class="site-subtitle" itemprop="description">上不去下不来，卡在这了</p>
@@ -185,11 +185,11 @@
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.gif">
       <meta itemprop="name" content="NazrinDuck">
-      <meta itemprop="description" content="hamood? hammod? hammod!">
+      <meta itemprop="description" content="Fâtih'in İstanbul'u fethettiği yaştasın!">
     </span>
 
     <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Blog de NazrinDuck">
+      <meta itemprop="name" content="Blog de Назриндак">
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
@@ -376,7 +376,7 @@
       <div class="site-overview-wrap sidebar-panel">
         <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
   <p class="site-author-name" itemprop="name">NazrinDuck</p>
-  <div class="site-description" itemprop="description">hamood? hammod? hammod!</div>
+  <div class="site-description" itemprop="description">Fâtih'in İstanbul'u fethettiği yaştasın!</div>
 </div>
 <div class="site-state-wrap motion-element">
   <nav class="site-state">

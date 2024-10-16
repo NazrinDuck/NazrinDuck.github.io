@@ -24,7 +24,7 @@
 <meta property="og:type" content="article">
 <meta property="og:title" content="[ctfshow pwn 内部赛] 签到题 write up">
 <meta property="og:url" content="http://example.com/2024/02/19/writeup2/index.html">
-<meta property="og:site_name" content="Blog de NazrinDuck">
+<meta property="og:site_name" content="Blog de Назриндак">
 <meta property="og:description" content="今天接触到一个新类型ret2csu的题，写一下wp，不能保证没有错误，欢迎大家指出 首先拿到题目，名字暗示了用ret2libc且程序为64位的。既然这样那直接拖进ida64：  乍一看，程序很简短，无后门binsh，像是典型的ret2libc，但是下手后就会发现没有那么简单。程序中唯一能有输出的函数是write，需要三个参数：  按照64位函数的传参顺序，我们需要rdi，rsi，rdx三个寄存器，">
 <meta property="og:locale">
 <meta property="og:image" content="https://pic1.zhimg.com/80/v2-a87a0fbed640185be5aeff2eb8d5dfb0_1440w.webp">
@@ -55,7 +55,7 @@
   };
 </script>
 
-  <title>[ctfshow pwn 内部赛] 签到题 write up | Blog de NazrinDuck</title>
+  <title>[ctfshow pwn 内部赛] 签到题 write up | Blog de Назриндак</title>
   
 
 
@@ -106,7 +106,7 @@
 
     <a href="/" class="brand" rel="start">
       <span class="logo-line-before"><i></i></span>
-      <h1 class="site-title">Blog de NazrinDuck</h1>
+      <h1 class="site-title">Blog de Назриндак</h1>
       <span class="logo-line-after"><i></i></span>
     </a>
       <p class="site-subtitle" itemprop="description">上不去下不来，卡在这了</p>
@@ -171,11 +171,11 @@
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.gif">
       <meta itemprop="name" content="NazrinDuck">
-      <meta itemprop="description" content="hamood? hammod? hammod!">
+      <meta itemprop="description" content="Fâtih'in İstanbul'u fethettiği yaştasın!">
     </span>
 
     <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Blog de NazrinDuck">
+      <meta itemprop="name" content="Blog de Назриндак">
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
@@ -328,7 +328,7 @@
       <div class="site-overview-wrap sidebar-panel">
         <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
   <p class="site-author-name" itemprop="name">NazrinDuck</p>
-  <div class="site-description" itemprop="description">hamood? hammod? hammod!</div>
+  <div class="site-description" itemprop="description">Fâtih'in İstanbul'u fethettiği yaştasın!</div>
 </div>
 <div class="site-state-wrap motion-element">
   <nav class="site-state">
