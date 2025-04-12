@@ -686,6 +686,101 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2024/02/21/IIS/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="NazrinDuck">
+      <meta itemprop="description" content="Fâtih'in İstanbul'u fethettiği yaştasın!">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Blog de Назриндак">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2024/02/21/IIS/" class="post-title-link" itemprop="url">[CTF web] 通过IIS在Windows下搭建php环境</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2024-02-21 21:18:32" itemprop="dateCreated datePublished" datetime="2024-02-21T21:18:32+08:00">2024-02-21</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-04-12 23:08:56" itemprop="dateModified" datetime="2025-04-12T23:08:56+08:00">2025-04-12</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>CTF中web方向的一大重点是php代码审计，这需要我们对php代码的特性很熟悉，并了解基本的php语法。因此，我们需要有一个能够练习和熟悉php的环境。而且，在构造序列化等时候我们也需要一个能够运行php的服务器。比起在线编写，我们不如直接在本地搭建一个能够解释运行php的服务器。</p>
+<p>绝大部分人电脑都是用的Windows，我们就利用Windows自带的IIS功能来搭建一个php环境</p>
+<h2 id="第一步：开启相应的Windows功能"><a href="#第一步：开启相应的Windows功能" class="headerlink" title="第一步：开启相应的Windows功能"></a>第一步：开启相应的Windows功能</h2><p>首先打开控制面板，搜索“启用或关闭Windows功能”找到这个界面；</p>
+<p><img src="/images/IIS/1.png" alt="IIS1"></p>
+<p>把Internet Information Services下边的第二个第三个勾上，启用IIS服务；</p>
+<p>接着搜索IIS找到IIS管理器：</p>
+<p><img src="/images/IIS/2.png" alt="IIS2"></p>
+<p>这时候看看右边的操作栏，如果没有启动就启动一下，接着进入网站；</p>
+<p><img src="/images/IIS/3.png" alt="IIS3"></p>
+<p>IIS默认自带一个网站Defaul Web Site，绑定的端口是80。同样检查右边的操作栏将其启动，我们访问127.0.0.1:80或localhost:80，成功的话会出现这样一个界面：</p>
+<p><img src="/images/IIS/4.png" alt="IIS4"></p>
+<h2 id="第二步：添加php服务"><a href="#第二步：添加php服务" class="headerlink" title="第二步：添加php服务"></a>第二步：添加php服务</h2><p>IIS中自带的服务只有asp和vb等，没有php服务，因此我们需要手动添加；</p>
+<p><img src="/images/IIS/5.png" alt="IIS5"></p>
+<p>这里的添加过程参考了<a href="%5BWindows+IIS+PHP%E2%80%94%E2%80%94PHP%E5%AE%89%E8%A3%85%E4%B8%8E%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE_php%E5%AE%89%E8%A3%85e%E7%9B%98,iis%E6%80%8E%E4%B9%88%E5%A4%84%E7%90%86%E5%8A%A8%E6%80%81%E5%86%85%E5%AE%B9-CSDN%E5%8D%9A%E5%AE%A2%5D(https://blog.csdn.net/weixin_43272781/article/details/101566707)">该博客</a>，过程比较麻烦，一步一步来是没有问题的，先在处理程序映射中添加php，再处理php.ini,最终成功在IIS中添加了php服务。</p>
+<h2 id="第三步：构建个人网站服务"><a href="#第三步：构建个人网站服务" class="headerlink" title="第三步：构建个人网站服务"></a>第三步：构建个人网站服务</h2><p>在网站界面右侧添加网站，出现该界面；</p>
+<p><img src="/images/IIS/6.png" alt="IIS6"></p>
+<p>名称什么的随便填，物理路径新建一个文件夹（之后的php代码就可以这个目录下编写调试），端口保证不冲突随便填，其他的默认就行；</p>
+<p>接下来在该目录添加文件index.php，输入phpinfo：</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line"><span class="title function_ invoke__">phpinfo</span>()</span><br><span class="line"><span class="meta">?&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>访问设置的端口（我的是1437），出现该页面说明没问题：</p>
+<p><img src="/images/IIS/7.png" alt="IIS7"></p>
+<p>接下来就可以在该目录编写练习php了。</p>
+<p>我们可以在该目录下随便添加php文件并通过该端口访问。觉得麻烦可以直接在终端界面使用curl直接访问。例如我们创建test.php，内容如下：</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line"><span class="keyword">echo</span> <span class="string">&quot;hello world&quot;</span></span><br><span class="line"><span class="meta">?&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>接着在终端键入：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl http://127.0.0.1:1437/test.php</span><br></pre></td></tr></table></figure>
+
+<p>便可以直接在终端得到结果，十分方便。</p>
+<p><img src="/images/IIS/8.png" alt="IIS8"></p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh">
     <link itemprop="mainEntityOfPage" href="http://example.com/2024/02/21/writeup3/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1080,12 +1175,12 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">8</span>
+          <span class="site-state-item-count">9</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
       <div class="site-state-item site-state-tags">
-        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-count">6</span>
         <span class="site-state-item-name">tags</span>
       </div>
   </nav>
