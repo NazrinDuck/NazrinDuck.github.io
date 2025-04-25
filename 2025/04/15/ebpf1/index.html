@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="eBPF介绍 eBPF基础 基础知识 调用模板 eBPF指令 eBPF指令编写 Helper函数    eBPF介绍 eBPF 是一项革命性的技术，起源于 Linux 内核，它可以在特权上下文中（如操作系统内核）运行沙盒程序。它用于安全有效地扩展内核的功能，而无需通过更改内核源代码或加载内核模块的方式来实现。  历史上由BPF(伯克利包过滤器 Berkeley Packet Filter)发">
+<meta property="og:type" content="article">
+<meta property="og:title" content="[Linux Kernel Pwn] eBPF 入门笔记（一）">
+<meta property="og:url" content="http://example.com/2025/04/15/ebpf1/index.html">
+<meta property="og:site_name" content="Blog de Назриндак">
+<meta property="og:description" content="eBPF介绍 eBPF基础 基础知识 调用模板 eBPF指令 eBPF指令编写 Helper函数    eBPF介绍 eBPF 是一项革命性的技术，起源于 Linux 内核，它可以在特权上下文中（如操作系统内核）运行沙盒程序。它用于安全有效地扩展内核的功能，而无需通过更改内核源代码或加载内核模块的方式来实现。  历史上由BPF(伯克利包过滤器 Berkeley Packet Filter)发">
+<meta property="og:locale">
+<meta property="article:published_time" content="2025-04-15T14:57:44.000Z">
+<meta property="article:modified_time" content="2025-04-25T17:36:25.213Z">
+<meta property="article:author" content="NazrinDuck">
+<meta property="article:tag" content="CTF">
+<meta property="article:tag" content="pwn">
+<meta property="article:tag" content="kernel">
+<meta property="article:tag" content="eBPF">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://example.com/2025/04/15/ebpf1/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh'
+  };
+</script>
+
+  <title>[Linux Kernel Pwn] eBPF 入门笔记（一） | Blog de Назриндак</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Blog de Назриндак</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">上不去下不来，卡在这了</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2025/04/15/ebpf1/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="NazrinDuck">
+      <meta itemprop="description" content="Fâtih'in İstanbul'u fethettiği yaştasın!">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Blog de Назриндак">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          [Linux Kernel Pwn] eBPF 入门笔记（一）
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2025-04-15 22:57:44" itemprop="dateCreated datePublished" datetime="2025-04-15T22:57:44+08:00">2025-04-15</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-04-26 01:36:25" itemprop="dateModified" datetime="2025-04-26T01:36:25+08:00">2025-04-26</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <!--toc:start-->
+
+<ul>
+<li><a href="#eBPF%E4%BB%8B%E7%BB%8D">eBPF介绍</a></li>
+<li><a href="#eBPF%E5%9F%BA%E7%A1%80">eBPF基础</a><ul>
+<li><a href="#%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86">基础知识</a></li>
+<li><a href="#%E8%B0%83%E7%94%A8%E6%A8%A1%E6%9D%BF">调用模板</a></li>
+<li><a href="#eBPF%E6%8C%87%E4%BB%A4">eBPF指令</a></li>
+<li><a href="#eBPF%E6%8C%87%E4%BB%A4%E7%BC%96%E5%86%99">eBPF指令编写</a></li>
+<li><a href="#Helper%E5%87%BD%E6%95%B0">Helper函数</a><!--toc:end--></li>
+</ul>
+</li>
+</ul>
+<h1 id="eBPF介绍"><a href="#eBPF介绍" class="headerlink" title="eBPF介绍"></a>eBPF介绍</h1><blockquote>
+<p><a target="_blank" rel="noopener" href="https://ebpf.io/zh-hans/">eBPF</a> 是一项革命性的技术，起源于 Linux 内核，它可以在特权上下文中（如操作系统内核）运行沙盒程序。它用于安全有效地扩展内核的功能，而无需通过更改内核源代码或加载内核模块的方式来实现。</p>
+</blockquote>
+<p>历史上由BPF(伯克利包过滤器 Berkeley Packet Filter)发展而来（现在称为cBPF），直接在内核中运行特权代码，给予了Linux内核编程的极大的灵活性。<br>eBPF需要内核支持，用户可以通过一系列指令编写程序，在程序被加载后需要经过检验，验证通过后会通过JIT (Just-in-Time) 编译成机器码执行。</p>
+<p>为了更加便捷，eBPF还支持在eBPF指令中直接调用函数(被称为Helper函数)。eBPF还提供map等数据结构用来与用户态之间传递信息；<br>在相关漏洞利用中，一般是想方法绕过严格的eBPF检验，通过漏洞混淆检验的过程，使得检验（模拟执行）结果和实际JIT编译运行结果不一致，从而造成安全漏洞，进一步转化为方便利用的类型。</p>
+<blockquote>
+<p>我们见到的沙箱题一般是用seccomp来实现的，而seccomp-bpf便是采用了BPF技术实现过滤系统调用</p>
+</blockquote>
+<blockquote>
+<p><a target="_blank" rel="noopener" href="https://docs.ebpf.io/">相关文档1</a> <a target="_blank" rel="noopener" href="https://docs.linuxkernel.org.cn/userspace-api/ebpf/syscall.html">相关文档2</a> Linux系统<a target="_blank" rel="noopener" href="https://elixir.bootlin.com/linux/v6.13.7/source/include/uapi/linux/bpf.h#L77">另见<code>/usr/include/linux/bpf.h</code></a></p>
+<blockquote>
+<p>bpf设计相关，<a target="_blank" rel="noopener" href="https://elixir.bootlin.com/linux/v6.13.7/source/Documentation/bpf/bpf_design_QA.rst">另见此</a></p>
+</blockquote>
+</blockquote>
+<h1 id="eBPF基础"><a href="#eBPF基础" class="headerlink" title="eBPF基础"></a>eBPF基础</h1><h2 id="基础知识"><a href="#基础知识" class="headerlink" title="基础知识"></a>基础知识</h2><blockquote>
+<p>本章的讨论环境基于Linux v6.13.7</p>
+</blockquote>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// in  /usr/include/asm/unistd_64.h</span></span><br><span class="line">...</span><br><span class="line"><span class="meta">#<span class="keyword">define</span> __NR_bpf 321</span></span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+
+<p>通过系统调用号为321的系统调用bpf可以使用eBPF相关功能。glibc并没有提供了包装函数，需要我们进行raw syscall:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;linux/bpf.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;asm/unistd_64.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">bpf</span><span class="params">(<span class="type">int</span> cmd, <span class="keyword">union</span> bpf_attr *attr, <span class="type">unsigned</span> <span class="type">int</span> size)</span> &#123;</span><br><span class="line">    syscall(__NR_bpf, cmd, attr, size);</span><br><span class="line">&#125;;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>参数<code>int cmd</code>标识bpf的行为（类型应为enum bpf_cmd）。常用的有：<ul>
+<li><code>BPF_PROG_LOAD</code> 用于加载并验证eBPF程序，写好了eBPF程序就用此参数上传。返回一个文件描述符（fd）以供使用。</li>
+<li><code>BPF_MAP_CREATE</code> 用于创建一个eBPF map，以键值对（key-value）的形式存储数据。返回一个文件描述符（fd）以供使用。</li>
+<li><code>BPF_MAP_LOOKUP_ELEM</code>与<code>BPF_MAP_UPDATE_ELEM</code>、<code>BPF_MAP_DELETE_ELEM</code>分别用来寻找、更新和删除map中的值（value）&#x2F;键值对（key&#x2F;value pair）</li>
+<li><code>BPF_MAP_GET_NEXT_KEY</code>寻找map中的下一个键（key）</li>
+<li><code>BPF_MAP_FREEZE</code> 冻结map的写权限（包括通过bpf调用实现的），此时检验（verifier）过程会将map中的值当作常数</li>
+<li><code>BPF_PROG_TEST_RUN</code> 用于测试运行eBPF，测试用输入（data&#x2F;context）及输出在参数<code>union bpf_attr *attr</code>中给出</li>
+<li>完整版<a target="_blank" rel="noopener" href="https://elixir.bootlin.com/linux/v6.13.7/source/include/uapi/linux/bpf.h#L922">见此</a></li>
+</ul>
+</li>
+<li>参数<code>unsigned int size</code>一般设置为<code>sizeof(attr)</code></li>
+<li>参数<code>union bpf_attr *attr</code>根据<code>cmd</code>的不同有不同的格式，该参数类型为<code>union bpf_attr *</code>，为一个包含多种结构体的联合体指针。该类型<a target="_blank" rel="noopener" href="https://elixir.bootlin.com/linux/v6.13.7/source/include/uapi/linux/bpf.h#L1462">完整原型</a>太长了，我们只看部分：（翻译并补充了部分注释）</li>
+</ul>
+<figure class="highlight c"><figcaption><span>bpf_attr</span><a target="_blank" rel="noopener" href="https://elixir.bootlin.com/linux/v6.13.7/source/include/uapi/linux/bpf.h#L1462">完整版</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">union</span> <span class="title">bpf_attr</span> &#123;</span></span><br><span class="line">...</span><br><span class="line"> <span class="class"><span class="keyword">struct</span> &#123;</span> <span class="comment">/*用作BPF_MAP_CREATE命令的匿名结构体 */</span></span><br><span class="line">  __u32 map_type; <span class="comment">/* 枚举 bpf_map_type 中的一种 */</span></span><br><span class="line">  __u32 key_size; <span class="comment">/* key的大小（字节） */</span></span><br><span class="line">  __u32 value_size; <span class="comment">/* value的大小（字节） */</span></span><br><span class="line">  __u32 max_entries; <span class="comment">/* 一个map的最大入口数 */</span></span><br><span class="line">  __u32 map_flags; <span class="comment">/* BPF_MAP_CREATE 相关</span></span><br><span class="line"><span class="comment">      * flags 标志在上边定义</span></span><br><span class="line"><span class="comment">      */</span></span><br><span class="line">  __u32 inner_map_fd; <span class="comment">/* fd 指向内部map */</span></span><br><span class="line">  __u32 numa_node; <span class="comment">/* numa 节点 (仅在</span></span><br><span class="line"><span class="comment">      * BPF_F_NUMA_NODE 设置时有效).</span></span><br><span class="line"><span class="comment">      */</span></span><br><span class="line">        ...</span><br><span class="line"> &#125;;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> &#123;</span> <span class="comment">/* 用作BPF_MAP_*_ELEM命令的匿名结构体*/</span></span><br><span class="line">  __u32  map_fd; <span class="comment">// 传入BPF_MAP_CREATE命令创建的map返回的fd</span></span><br><span class="line">  __aligned_u64 key;</span><br><span class="line">  <span class="class"><span class="keyword">union</span> &#123;</span></span><br><span class="line">   __aligned_u64 value;</span><br><span class="line">   __aligned_u64 next_key;</span><br><span class="line">  &#125;;</span><br><span class="line">  __u64  flags; <span class="comment">// flag值规定了对应命令的行为</span></span><br><span class="line"> &#125;;</span><br><span class="line">    ...</span><br><span class="line"></span><br><span class="line"> <span class="class"><span class="keyword">struct</span> &#123;</span> <span class="comment">/* 用作BPF_PROG_LOAD命令的匿名结构体 */</span></span><br><span class="line">  __u32  prog_type; <span class="comment">/* 枚举 bpf_prog_type 中的一种 */</span></span><br><span class="line">  __u32  insn_cnt; <span class="comment">// 指令长度</span></span><br><span class="line">  __aligned_u64 insns; <span class="comment">// 传入指令的指针，事实上类型应该为struct bpf_insn **</span></span><br><span class="line">  __aligned_u64 license; <span class="comment">// 一般为&quot;GPL&quot;</span></span><br><span class="line">  __u32  log_level; <span class="comment">/* 检验报告的详细程度 */</span></span><br><span class="line">  __u32  log_size; <span class="comment">/* 用户缓冲区的大小 */</span></span><br><span class="line">  __aligned_u64 log_buf; <span class="comment">/* 用户提供的缓冲区 */</span></span><br><span class="line">  __u32  kern_version; <span class="comment">/* 没用 */</span></span><br><span class="line">        ...</span><br><span class="line"> &#125;;</span><br><span class="line">    ...</span><br><span class="line"></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> &#123;</span> <span class="comment">/* 用作BPF_PROG_TEST_RUN命令的匿名结构体 */</span></span><br><span class="line">  __u32  prog_fd; <span class="comment">// 传入BPF_PROG_LOAD命令创建的map返回的fd</span></span><br><span class="line">  __u32  retval;</span><br><span class="line">  __u32  data_size_in; <span class="comment">/* 输入: data_in的长度 */</span></span><br><span class="line">  __u32  data_size_out; <span class="comment">/* 输入/输出: data_out的长度</span></span><br><span class="line"><span class="comment">       *   返回 ENOSPC 如果 data_out</span></span><br><span class="line"><span class="comment">       *   太小了.</span></span><br><span class="line"><span class="comment">       */</span></span><br><span class="line">  __aligned_u64 data_in;</span><br><span class="line">  __aligned_u64 data_out;</span><br><span class="line">  __u32  repeat;</span><br><span class="line">  __u32  duration;</span><br><span class="line">  __u32  ctx_size_in; <span class="comment">/* 输入: ctx_in的长度 */</span></span><br><span class="line">  __u33  ctx_size_out; <span class="comment">/* 输入/输出: ctx_out的长度</span></span><br><span class="line"><span class="comment">       *   返回 ENOSPC 如果 ctx_out</span></span><br><span class="line"><span class="comment">       *   太小了.</span></span><br><span class="line"><span class="comment">       */</span></span><br><span class="line">  __aligned_u64 ctx_in;</span><br><span class="line">  __aligned_u64 ctx_out;</span><br><span class="line">  __u32  flags;</span><br><span class="line">  __u32  cpu;</span><br><span class="line">  __u32  batch_size;</span><br><span class="line"> &#125; test;</span><br><span class="line">...</span><br><span class="line">&#125; __attribute__((aligned(<span class="number">8</span>)));</span><br></pre></td></tr></table></figure>
+
+<p>其中，<code>map_type</code>的枚举类型为<a target="_blank" rel="noopener" href="https://elixir.bootlin.com/linux/v6.13.7/source/include/uapi/linux/bpf.h#L964"><code>enum bpf_map_type</code></a>，部分内容为：</p>
+<figure class="highlight c"><figcaption><span>bpf_map_type</span><a target="_blank" rel="noopener" href="https://elixir.bootlin.com/linux/v6.13.7/source/include/uapi/linux/bpf.h#L964">完整版</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">enum</span> <span class="title">bpf_map_type</span> &#123;</span></span><br><span class="line"> BPF_MAP_TYPE_UNSPEC, <span class="comment">// 保留0作为无效类型</span></span><br><span class="line"> BPF_MAP_TYPE_HASH, <span class="comment">// 哈希表，key_size和value_size不受限制</span></span><br><span class="line"> BPF_MAP_TYPE_ARRAY, <span class="comment">// 数组，value_size不受限制，key_size限制为4（uint32）</span></span><br><span class="line"> BPF_MAP_TYPE_QUEUE, <span class="comment">// 队列，value_size不受限制，key_size限制为0（没有键）</span></span><br><span class="line"> BPF_MAP_TYPE_STACK, <span class="comment">// 栈，value_size不受限制，key_size限制为0（没有键），使用特有的Helper函数操作</span></span><br><span class="line"> ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><code>prog</code>的枚举类型为<a target="_blank" rel="noopener" href="https://elixir.bootlin.com/linux/v6.13.7/source/include/uapi/linux/bpf.h#L1024"><code>enum bpf_prog_type</code></a>，部分内容为：</p>
+<figure class="highlight c"><figcaption><span>bpf_prog_type</span><a target="_blank" rel="noopener" href="https://elixir.bootlin.com/linux/v6.13.7/source/include/uapi/linux/bpf.h#L1024">完整版</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">enum</span> <span class="title">bpf_prog_type</span> &#123;</span></span><br><span class="line"> BPF_PROG_TYPE_UNSPEC, <span class="comment">// 保留0作为无效类型</span></span><br><span class="line"> BPF_PROG_TYPE_SOCKET_FILTER, <span class="comment">// 用于过滤/修改socket接收的数据包</span></span><br><span class="line"> BPF_PROG_TYPE_KPROBE, <span class="comment">// 附加到kprobe上的eBPF</span></span><br><span class="line"> BPF_PROG_TYPE_SCHED_CLS, <span class="comment">// 实现流量控制（Traffic Control）的分类（过滤）</span></span><br><span class="line"> BPF_PROG_TYPE_SCHED_ACT, <span class="comment">// 实现对流量控制（Traffic Control）的操作</span></span><br><span class="line"> BPF_PROG_TYPE_TRACEPOINT, <span class="comment">// 附加到Linux内核终端trace points,来获得内核消息</span></span><br><span class="line"> ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="调用模板"><a href="#调用模板" class="headerlink" title="调用模板"></a>调用模板</h2><p>由此可见，参数<code>union bpf_attr *attr</code>是最重要且繁琐的参数。在eBPF Pwn中，我们往往只需要关注部分参数，下边给出一些调用模板：</p>
+<blockquote>
+<p>需要的头文件&#x2F;宏：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;linux/bpf.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdint.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;asm/unistd_64.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> ptr_to_u64(val) (uint64_t)val</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> bpf(cmd, attr, size) syscall(__NR_bpf, cmd, attr, size)</span></span><br></pre></td></tr></table></figure>
+</blockquote>
+<figure class="highlight c"><figcaption><span>map相关</span><a target="_blank" rel="noopener" href="https://www.man7.org/linux/man-pages/man2/bpf.2.html">manual</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 创建map, 一般类型为BPF_MAP_TYPE_ARRAY或BPF_MAP_TYPE_HASH</span></span><br><span class="line"><span class="type">static</span> <span class="type">int</span> <span class="title function_">bpf_create_map</span><span class="params">(<span class="keyword">enum</span> bpf_map_type map_type, <span class="type">unsigned</span> <span class="type">int</span> key_size,</span></span><br><span class="line"><span class="params">                          <span class="type">unsigned</span> <span class="type">int</span> value_size, <span class="type">unsigned</span> <span class="type">int</span> max_entries,</span></span><br><span class="line"><span class="params">                          <span class="type">unsigned</span> <span class="type">int</span> map_flags)</span> &#123;</span><br><span class="line">  <span class="class"><span class="keyword">union</span> <span class="title">bpf_attr</span> <span class="title">attr</span> =</span> &#123;</span><br><span class="line">      .map_type = map_type,</span><br><span class="line">      .key_size = key_size,</span><br><span class="line">      .value_size = value_size,</span><br><span class="line">      .max_entries = max_entries,</span><br><span class="line">      .map_flags = map_flags,</span><br><span class="line">  &#125;;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> bpf(BPF_MAP_CREATE, &amp;attr, <span class="keyword">sizeof</span>(attr));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 根据key来查找value，传入指针</span></span><br><span class="line"><span class="type">static</span> <span class="type">int</span></span><br><span class="line"><span class="title function_">bpf_lookup_elem</span><span class="params">(<span class="type">int</span> fd, <span class="type">const</span> <span class="type">void</span> *key, <span class="type">void</span> *value)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="class"><span class="keyword">union</span> <span class="title">bpf_attr</span> <span class="title">attr</span> =</span> &#123;</span><br><span class="line">        .map_fd = fd,</span><br><span class="line">        .key    = ptr_to_u64(key),</span><br><span class="line">        .value  = ptr_to_u64(value),</span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> bpf(BPF_MAP_LOOKUP_ELEM, &amp;attr, <span class="keyword">sizeof</span>(attr));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 更新/插入key-value对</span></span><br><span class="line"><span class="type">static</span> <span class="type">int</span></span><br><span class="line"><span class="title function_">bpf_update_elem</span><span class="params">(<span class="type">int</span> fd, <span class="type">const</span> <span class="type">void</span> *key, <span class="type">const</span> <span class="type">void</span> *value,</span></span><br><span class="line"><span class="params">                <span class="type">uint64_t</span> flags)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="class"><span class="keyword">union</span> <span class="title">bpf_attr</span> <span class="title">attr</span> =</span> &#123;</span><br><span class="line">        .map_fd = fd,</span><br><span class="line">        .key    = ptr_to_u64(key),</span><br><span class="line">        .value  = ptr_to_u64(value),</span><br><span class="line">        .flags  = flags,</span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> bpf(BPF_MAP_UPDATE_ELEM, &amp;attr, <span class="keyword">sizeof</span>(attr));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 根据key来删除value</span></span><br><span class="line"><span class="type">static</span> <span class="type">int</span></span><br><span class="line"><span class="title function_">bpf_delete_elem</span><span class="params">(<span class="type">int</span> fd, <span class="type">const</span> <span class="type">void</span> *key)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="class"><span class="keyword">union</span> <span class="title">bpf_attr</span> <span class="title">attr</span> =</span> &#123;</span><br><span class="line">        .map_fd = fd,</span><br><span class="line">        .key    = ptr_to_u64(key),</span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> bpf(BPF_MAP_DELETE_ELEM, &amp;attr, <span class="keyword">sizeof</span>(attr));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 根据key来获取下一个key</span></span><br><span class="line"><span class="type">static</span> <span class="type">int</span></span><br><span class="line"><span class="title function_">bpf_get_next_key</span><span class="params">(<span class="type">int</span> fd, <span class="type">const</span> <span class="type">void</span> *key, <span class="type">void</span> *next_key)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="class"><span class="keyword">union</span> <span class="title">bpf_attr</span> <span class="title">attr</span> =</span> &#123;</span><br><span class="line">        .map_fd   = fd,</span><br><span class="line">        .key      = ptr_to_u64(key),</span><br><span class="line">        .next_key = ptr_to_u64(next_key),</span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> bpf(BPF_MAP_GET_NEXT_KEY, &amp;attr, <span class="keyword">sizeof</span>(attr));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p><code>bpf_create_map</code>中的参数<code>max_entries</code>指的是map的最大容量（key-value对大于这个值不允许插入）<br><code>bpf_update_elem</code>的flags参数为<code>BPF_NOEXIST</code>（key不存在时才会更新），<code>BPF_EXIST</code>（仅在key存在时更新）或<code>BPF_ANY</code>（两种情况均可）</p>
+</blockquote>
+<figure class="highlight c"><figcaption><span>prog创建</span><a target="_blank" rel="noopener" href="https://www.man7.org/linux/man-pages/man2/bpf.2.html">manual</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">define</span> LOG_BUF_SIZE 0x400</span></span><br><span class="line"></span><br><span class="line"><span class="type">char</span> bpf_log_buf[LOG_BUF_SIZE];</span><br><span class="line"></span><br><span class="line"><span class="type">int</span></span><br><span class="line"><span class="title function_">bpf_prog_load</span><span class="params">(<span class="keyword">enum</span> bpf_prog_type type,</span></span><br><span class="line"><span class="params">              <span class="type">const</span> <span class="keyword">struct</span> bpf_insn *insns, <span class="type">int</span> insn_cnt,</span></span><br><span class="line"><span class="params">              <span class="type">const</span> <span class="type">char</span> *license)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="class"><span class="keyword">union</span> <span class="title">bpf_attr</span> <span class="title">attr</span> =</span> &#123;</span><br><span class="line">        .prog_type = type,</span><br><span class="line">        .insns     = ptr_to_u64(insns),</span><br><span class="line">        .insn_cnt  = insn_cnt,</span><br><span class="line">        .license   = ptr_to_u64(license),</span><br><span class="line">        .log_buf   = ptr_to_u64(bpf_log_buf),</span><br><span class="line">        .log_size  = LOG_BUF_SIZE,</span><br><span class="line">        .log_level = <span class="number">1</span>,</span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> bpf(BPF_PROG_LOAD, &amp;attr, <span class="keyword">sizeof</span>(attr));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 或者更加简便的</span></span><br><span class="line"><span class="type">int</span></span><br><span class="line"><span class="title function_">bpf_prog_load_once</span><span class="params">()</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">const</span> <span class="class"><span class="keyword">struct</span> <span class="title">bpf_insn</span> <span class="title">insns</span>[] =</span> &#123;</span><br><span class="line">        <span class="comment">/* add your code */</span></span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line">    <span class="class"><span class="keyword">union</span> <span class="title">bpf_attr</span> <span class="title">attr</span> =</span> &#123;</span><br><span class="line">        .prog_type = BPF_PROG_TYPE_SOCKET_FILTER,</span><br><span class="line">        .insns = ptr_to_u64(&amp;insns),</span><br><span class="line">        .insn_cnt = <span class="keyword">sizeof</span>(insns) / <span class="keyword">sizeof</span>(<span class="keyword">struct</span> bpf_insn),</span><br><span class="line">        .license = ptr_to_u64(<span class="string">&quot;GPL&quot;</span>),</span><br><span class="line">        .log_buf = ptr_to_u64(bpf_log_buf),</span><br><span class="line">        .log_size = LOG_BUF_SIZE,</span><br><span class="line">        .log_level = <span class="number">2</span>,</span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> bpf(BPF_PROG_LOAD, &amp;attr, <span class="keyword">sizeof</span>(attr));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight c"><figcaption><span>eBPF触发模板</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 通过socket触发，要求cmd为BPF_PROG_TYPE_SOCKET_FILTER</span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/socket.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> sockets[<span class="number">2</span>];</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">trigger1</span><span class="params">(<span class="type">int</span> prog_fd, <span class="type">uint64_t</span>* payload)</span> &#123;</span><br><span class="line">    socketpair(AF_UNIX, SOCK_DGRAM, <span class="number">0</span>, sockets);</span><br><span class="line">    setsockopt(sockets[<span class="number">1</span>], SOL_SOCKET, SO_ATTACH_BPF, &amp;prog_fd, <span class="keyword">sizeof</span>(prog_fd));</span><br><span class="line"></span><br><span class="line">    <span class="type">char</span> *buffer = (<span class="type">char</span> *)payload;</span><br><span class="line">    <span class="keyword">return</span> write(sockets[<span class="number">0</span>], buffer, <span class="keyword">sizeof</span>(buffer));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 通过BPF_PROG_TEST_RUN触发</span></span><br><span class="line"><span class="type">int</span> <span class="title function_">trigger2</span><span class="params">(<span class="type">int</span> prog_fd, <span class="type">uint64_t</span>* payload)</span> &#123;</span><br><span class="line">    <span class="type">char</span> buffer[TST_DATA_SIZE];</span><br><span class="line">    <span class="built_in">memset</span>(buffer, <span class="number">0</span>, TST_DATA_SIZE);</span><br><span class="line">    <span class="built_in">memcpy</span>(buffer + <span class="number">0xe</span>, payload, TST_DATA_SIZE - <span class="number">0xe</span>);</span><br><span class="line"></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> __<span class="title">sk_buff</span> <span class="title">skb</span> =</span> &#123;&#125;;</span><br><span class="line"></span><br><span class="line">    <span class="class"><span class="keyword">union</span> <span class="title">bpf_attr</span> <span class="title">tst_run_attr</span> =</span> &#123;</span><br><span class="line">        .test.data_size_in = TST_DATA_SIZE,</span><br><span class="line">        .test.data_in = ptr_to_u64(&amp;buffer),</span><br><span class="line">        .test.ctx_size_in = <span class="keyword">sizeof</span>(skb),</span><br><span class="line">        .test.ctx_in = ptr_to_u64(&amp;skb),</span><br><span class="line">    &#125;;</span><br><span class="line">    tst_run_attr.test.prog_fd = prog_fd;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> bpf(BPF_PROG_TEST_RUN, &amp;tst_run_attr, <span class="keyword">sizeof</span>(tst_run_attr)));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>有关trigger函数原理&#x2F;该选用哪一个的问题会在后几章详细解释</p>
+</blockquote>
+<h2 id="eBPF指令"><a href="#eBPF指令" class="headerlink" title="eBPF指令"></a>eBPF指令</h2><p>在prog创建时需要提供指令<code>struct bpf_insn *insns</code>，也是eBPF程序的核心部分。在eBPF Pwn中，指令的编写在触发&#x2F;利用漏洞中扮演重要角色。<br>在编写指令之前，我们需要搞明白eBPF的工作模式</p>
+<blockquote>
+<p>这是bpf指令结构体，看着好像并不复杂，但麻雀虽小五脏俱全</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">bpf_insn</span> &#123;</span></span><br><span class="line"> __u8 code;  <span class="comment">/* opcode */</span></span><br><span class="line"> __u8 dst_reg:<span class="number">4</span>; <span class="comment">/* dest register */</span></span><br><span class="line"> __u8 src_reg:<span class="number">4</span>; <span class="comment">/* source register */</span></span><br><span class="line"> __s16 off;  <span class="comment">/* signed offset */</span></span><br><span class="line"> __s32 imm;  <span class="comment">/* signed immediate constant */</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+</blockquote>
+<p>一条eBPF指令分为五个部分，分别是<strong>操作码</strong>，<strong>目的寄存器</strong>，<strong>源寄存器</strong>，（有符号）<strong>偏移</strong>和（有符号）<strong>立即数</strong>，长度为64bit（8字节）</p>
+<p>编码格式：</p>
+<table>
+    <tr>
+        <td>操作码（opcode） 8bit</td>
+        <td>寄存器（regs） (4 + 4 =)8bit</td>
+        <td>偏移（offset）16bit</td>
+    </tr>
+    <tr>
+        <td colspan="3">立即数（imm） 32bit</td>
+    </tr>
+</table>
+
+<blockquote>
+<p>存在宽编码格式指令，后接32bit无用保留区及第二个32bit的立即数，此时指令长度为128bit（16字节）（其实是两条指令拼一块）<br><a target="_blank" rel="noopener" href="https://elixir.bootlin.com/linux/v6.13.7/source/include/uapi/linux/bpf_common.h">操作码宏定义</a></p>
+<blockquote>
+<p>详细编码格式不再赘述，<a target="_blank" rel="noopener" href="https://elixir.bootlin.com/linux/v6.13.7/source/Documentation/bpf/standardization/instruction-set.rst">详见此处</a></p>
+</blockquote>
+</blockquote>
+<p>操作码（code）分为8类，分别为：</p>
+<ul>
+<li><code>BPF_LD</code> 从64位立即数（imm64, 仅允许宽指令）地址取值存入目的寄存器（src_reg）</li>
+<li><code>BPF_LDX</code> 从源寄存器（dst_reg）地址取值存入目的寄存器（src_reg）</li>
+<li><code>BPF_ST</code> 把立即数（imm）存入目的寄存器（dst_reg）对应地址</li>
+<li><code>BPF_STX</code> 把源寄存器（src_reg）数据存入目的寄存器（dst_reg）对应地址</li>
+<li><code>BPF_ALU</code> 32位算术操作</li>
+<li><code>BPF_JMP</code> 64位跳转操作</li>
+<li><code>BPF_JMP32</code> 32位跳转操作</li>
+<li><code>BPF_ALU64</code> 64位算术操作</li>
+</ul>
+<p><code>BPF_LD(X)</code>&#x2F;<code>BPF_ST(X)</code>操作涉及取址，需同时提供取址大小（size），分别有：</p>
+<ul>
+<li><code>BPF_W</code> word (32位)</li>
+<li><code>BPF_H</code> half word (16位)</li>
+<li><code>BPF_B</code> byte (8位)</li>
+<li><code>BPF_DW</code> double word (64位)</li>
+</ul>
+<blockquote>
+<p>这里的word（字）的大小并不是16位而是32位</p>
+</blockquote>
+<p>该操作还有不同的模式，<a target="_blank" rel="noopener" href="https://elixir.bootlin.com/linux/v6.13.7/source/Documentation/bpf/standardization/instruction-set.rst#L570">参阅此处</a></p>
+<p>其中<code>BPF_ALU</code>&#x2F;<code>BPF_ALU64</code>中有14种不同的操作，常用的有：</p>
+<table>
+<thead>
+<tr>
+<th>名字</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>ADD</td>
+<td>dst +&#x3D; src</td>
+</tr>
+<tr>
+<td>SUB</td>
+<td>dst -&#x3D; src</td>
+</tr>
+<tr>
+<td>MUL</td>
+<td>dst *&#x3D; src</td>
+</tr>
+<tr>
+<td>DIV</td>
+<td>dst &#x3D; (src !&#x3D; 0) ? (dst &#x2F; src) : 0</td>
+</tr>
+<tr>
+<td>MOD</td>
+<td>dst &#x3D; (src !&#x3D; 0) ? (dst % src) : dst</td>
+</tr>
+<tr>
+<td>AND</td>
+<td>dst &amp;&#x3D; src</td>
+</tr>
+<tr>
+<td>OR</td>
+<td>dst |&#x3D; src</td>
+</tr>
+<tr>
+<td>XOR</td>
+<td>dst ^&#x3D; src</td>
+</tr>
+<tr>
+<td>NEG</td>
+<td>dst &#x3D; -dst</td>
+</tr>
+<tr>
+<td>MOV</td>
+<td>dst &#x3D; src</td>
+</tr>
+<tr>
+<td>MOVSX</td>
+<td>dst &#x3D; (s8,s16,s32)src （根据offset确定）</td>
+</tr>
+</tbody></table>
+<blockquote>
+<p>带符号除法&#x2F;取模操作在对应命令前加上<code>S</code>即可（<code>SDIV</code>&#x2F;<code>SMOD</code>）<br>完整版<a target="_blank" rel="noopener" href="https://elixir.bootlin.com/linux/v6.13.7/source/Documentation/bpf/standardization/instruction-set.rst#L325">参阅此处</a></p>
+</blockquote>
+<p><code>BPF_JMP32</code>&#x2F;<code>BPF_JMP</code>也有14种不同的类型，常用的有：</p>
+<table>
+<thead>
+<tr>
+<th>名字</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>JA</td>
+<td>PC +&#x3D; offset&#x2F;imm （立即跳转）</td>
+</tr>
+<tr>
+<td>JEQ</td>
+<td>PC +&#x3D; offset if dst &#x3D;&#x3D; src （相等跳转）</td>
+</tr>
+<tr>
+<td>JNE</td>
+<td>PC +&#x3D; offset if dst !&#x3D; src （不等跳转）</td>
+</tr>
+<tr>
+<td>JGT</td>
+<td>PC +&#x3D; offset if dst &gt; src （无符号）</td>
+</tr>
+<tr>
+<td>JGE</td>
+<td>PC +&#x3D; offset if dst &gt;&#x3D; src （无符号）</td>
+</tr>
+<tr>
+<td>JLT</td>
+<td>PC +&#x3D; offset if dst &lt; src （无符号）</td>
+</tr>
+<tr>
+<td>JLE</td>
+<td>PC +&#x3D; offset if dst &lt;&#x3D; src （无符号）</td>
+</tr>
+<tr>
+<td>JSET</td>
+<td>PC +&#x3D; offset if dst &amp; src</td>
+</tr>
+</tbody></table>
+<blockquote>
+<p>带符号比较操作在对应命令中间加上<code>S</code>即可（<code>JSGT</code>，<code>JSLE</code>等）</p>
+</blockquote>
+<p>比较特殊的指令有：</p>
+<table>
+<thead>
+<tr>
+<th>名字</th>
+<th>源寄存器(src_reg)</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>CALL</td>
+<td>src_reg &#x3D; 0x0</td>
+<td>通过imm对应的static id调用Helper函数</td>
+</tr>
+<tr>
+<td>CALL</td>
+<td>src_reg &#x3D; 0x1</td>
+<td>PC +&#x3D; imm （作为函数调用）</td>
+</tr>
+<tr>
+<td>CALL</td>
+<td>src_reg &#x3D; 0x2</td>
+<td>通过imm对应的BTF id调用Helper函数</td>
+</tr>
+<tr>
+<td>EXIT</td>
+<td>src_reg &#x3D; 0x0</td>
+<td>从函数&#x2F;eBPF程序返回</td>
+</tr>
+</tbody></table>
+<p>对于目的寄存器和源寄存器，有<code>BPF_REG_0</code>到<code>BPF_REG_10</code>一共11种，均为64位寄存器，这些寄存器的功能&#x2F;对应关系如下（下用<code>Rx</code>代替<code>BPF_REG_x</code>）：</p>
+<blockquote>
+<p>参阅<a target="_blank" rel="noopener" href="https://elixir.bootlin.com/linux/v6.13.7/source/Documentation/bpf/classic_vs_extended.rst">此处</a></p>
+</blockquote>
+<ul>
+<li>R0 (rax): 函数调用返回值&#x2F;BPF程序返回值</li>
+<li>R1 (rdi): 在eBPF程序运行前自动赋值为ctx（不同的cmd参数对应着不同的类型，socket filter中为socket缓冲区），在调用函数时充当argv1</li>
+<li>R2 (rsi): argv2</li>
+<li>R3 (rdx): argv3</li>
+<li>R4 (rcx): argv4</li>
+<li>R5 (r8): argv5</li>
+<li>R6 (rbx): 被调用方保留</li>
+<li>R7 (r13): 被调用方保留</li>
+<li>R8 (r14): 被调用方保留</li>
+<li>R9 (r15): 被调用方保留</li>
+<li>R10 (rbp): 只读寄存器，指向栈帧，用于访问栈</li>
+</ul>
+<blockquote>
+<p>eBPF仅允许参数小于等于5个的函数，在设计时也要考虑这一点</p>
+</blockquote>
+<h2 id="eBPF指令编写"><a href="#eBPF指令编写" class="headerlink" title="eBPF指令编写"></a>eBPF指令编写</h2><p>以上便是eBPF指令（<code>struct bpf_insn</code>）的细节，了解了这些我们便可以编写eBPF程序了。<br>一个eBPF程序事实上就是一个eBPF结构体数组，我们可以直接按照数组&#x2F;结构体的声明方式直接一句一句地编写eBPF程序，但这样无异于手搓机器码，过于繁琐。<br>为了稍微简化eBPF程序的编写，Linux项目本身提供了一个<a target="_blank" rel="noopener" href="https://elixir.bootlin.com/linux/v6.13.7/source/samples/bpf/bpf_insn.h#L10">宏定义头文件<strong>bpf_insn.h</strong></a>，我们可以把它复制下来作为头文件使用。</p>
+<blockquote>
+<p>事实上这种方法只是将手搓机器码升级到了手搓汇编，在编写复杂功能eBPF时还是要用到第三方库（libbpf&#x2F;libxdp等）</p>
+</blockquote>
+<p>以下是一个示例程序：</p>
+<blockquote>
+<p>需要的头文件：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;linux/bpf.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;./bpf_insn.h&quot;</span> <span class="comment">// your path to bpf_insn.h</span></span></span><br></pre></td></tr></table></figure>
+</blockquote>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">bpf_insn</span> <span class="title">bpf_prog</span>[] =</span> &#123;</span><br><span class="line">    BPF_MOV64_REG(BPF_REG_8, BPF_REG_1),</span><br><span class="line">    BPF_MOV64_IMM(BPF_REG_1, <span class="number">0x1</span>),</span><br><span class="line">    BPF_MOV64_IMM(BPF_REG_2, <span class="number">0x2</span>),</span><br><span class="line"></span><br><span class="line">    BPF_ST_MEM(BPF_DW, BPF_REG_10, <span class="number">-0x10</span>, <span class="number">0x3</span>),</span><br><span class="line">    BPF_ST_MEM(BPF_DW, BPF_REG_10, <span class="number">-0x8</span>, <span class="number">0x4</span>),</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    BPF_LDX_MEM(BPF_DW, BPF_REG_3, BPF_REG_10, <span class="number">-0x8</span>),</span><br><span class="line">    BPF_LDX_MEM(BPF_DW, BPF_REG_4, BPF_REG_10, <span class="number">-0x10</span>),</span><br><span class="line"></span><br><span class="line">    BPF_ALU64_REG(BPF_ADD, BPF_REG_3, BPF_REG_4),</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    BPF_MOV64_IMM(BPF_REG_0, <span class="number">0x0</span>),</span><br><span class="line">    BPF_EXIT_INSN()</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>对应生成的汇编如下所示：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">0xffffffffc0000668:  endbr64</span><br><span class="line">0xffffffffc000066c:  nop    DWORD PTR [rax+rax*1+0x0]</span><br><span class="line">0xffffffffc0000671:  xchg   ax,ax</span><br><span class="line">0xffffffffc0000673:  push   rbp</span><br><span class="line">0xffffffffc0000674:  mov    rbp,rsp</span><br><span class="line">0xffffffffc0000677:  endbr64</span><br><span class="line">0xffffffffc000067b:  sub    rsp,0x10</span><br><span class="line">0xffffffffc0000682:  push   r14</span><br><span class="line">0xffffffffc0000684:  mov    r14,rdi</span><br><span class="line">0xffffffffc0000687:  mov    edi,0x1</span><br><span class="line">0xffffffffc000068c:  mov    esi,0x2</span><br><span class="line">0xffffffffc0000691:  mov    QWORD PTR [rbp-0x10],0x3</span><br><span class="line">0xffffffffc0000699:  lfence</span><br><span class="line">0xffffffffc000069c:  mov    QWORD PTR [rbp-0x8],0x4</span><br><span class="line">0xffffffffc00006a4:  lfence</span><br><span class="line">0xffffffffc00006a7:  mov    rdx,QWORD PTR [rbp-0x8]</span><br><span class="line">0xffffffffc00006ab:  mov    rcx,QWORD PTR [rbp-0x10]</span><br><span class="line">0xffffffffc00006af:  add    rdx,rcx</span><br><span class="line">0xffffffffc00006b2:  xor    eax,eax</span><br><span class="line">0xffffffffc00006b4:  pop    r14</span><br><span class="line">0xffffffffc00006b6:  leave</span><br><span class="line">0xffffffffc00006b7:  ret</span><br></pre></td></tr></table></figure>
+</blockquote>
+<p>可以看出该程序仅仅是进行了一些<del>意义不明的</del>寄存器和栈操作，并没有什么实际用处。为了拓展程序功能，同时减少内核上下文切换的开销，ebPF提供了一系列Helper函数，来实现更强大方便的功能。</p>
+<h2 id="Helper函数"><a href="#Helper函数" class="headerlink" title="Helper函数"></a>Helper函数</h2><p>eBPF中的Helper函数是内核函数，运行在内核上下文，可以允许eBPF程序如同调用函数一样与内核交互<br>Helper函数功能强大，用途很广。目前一共有211个Helper函数，可以被分为map相关，trace程序相关，print相关，网络相关等类别<br>在eBPF pwn中，一般只需要关注部分常用&#x2F;方便漏洞利用的Helper函数即可</p>
+<blockquote>
+<p>调用函数的方法如下所示</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">BPF_RAW_INSN(BPF_JMP | BPF_CALL, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, BPF_FUNC_NAME)</span><br></pre></td></tr></table></figure>
+</blockquote>
+<h3 id="传参规则"><a href="#传参规则" class="headerlink" title="传参规则"></a>传参规则</h3><p>在调用Helper函数之前，我们先了解一下Helper函数的传参类型规则。以下是一个示例Helper函数原型：</p>
+<figure class="highlight c"><figcaption><span>函数原型</span><a target="_blank" rel="noopener" href="https://elixir.bootlin.com/linux/v6.13.7/source/kernel/bpf/helpers.c#L109">出处</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">const</span> <span class="class"><span class="keyword">struct</span> <span class="title">bpf_func_proto</span> <span class="title">bpf_map_pop_elem_proto</span> =</span> &#123;</span><br><span class="line"> .func  = bpf_map_pop_elem,</span><br><span class="line"> .gpl_only = <span class="literal">false</span>,</span><br><span class="line"> .ret_type = RET_INTEGER,</span><br><span class="line"> .arg1_type = ARG_CONST_MAP_PTR,</span><br><span class="line"> .arg2_type = ARG_PTR_TO_MAP_VALUE | MEM_UNINIT | MEM_WRITE,</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>其中我们需要注意三个类型：<code>ret_type</code>（类型为<code>bpf_return_type</code>）, <code>arg_type</code>（类型为<code>bpf_arg_type</code>）及其后边或操作的参数标志(类型为<code>bpf_type_flag</code>)</p>
+<ul>
+<li>参数类型<code>bpf_arg_type</code></li>
+</ul>
+<figure class="highlight c"><figcaption><span>部分</span><a target="_blank" rel="noopener" href="https://elixir.bootlin.com/linux/v6.13.7/source/include/linux/bpf.h#L750">完整版</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* 函数参数约束 */</span></span><br><span class="line"><span class="class"><span class="keyword">enum</span> <span class="title">bpf_arg_type</span> &#123;</span></span><br><span class="line">  ARG_DONTCARE = <span class="number">0</span>, <span class="comment">/* 在helper函数中没有用的参数*/</span></span><br><span class="line"></span><br><span class="line"> <span class="comment">/* 以下的约束在函数</span></span><br><span class="line"><span class="comment">  * bpf_map_lookup/update/delete_elem() 中使用</span></span><br><span class="line"><span class="comment">  */</span></span><br><span class="line">  ARG_CONST_MAP_PTR, <span class="comment">/* 常量(const)参数 用作指向bpf_map的指针 */</span></span><br><span class="line">  ARG_PTR_TO_MAP_KEY, <span class="comment">/* 指向栈的指针，用作map的键(key) */</span></span><br><span class="line">  ARG_PTR_TO_MAP_VALUE, <span class="comment">/* 指向栈的指针，用作map的值(value) */</span></span><br><span class="line"></span><br><span class="line"> <span class="comment">/* 在函数原型bpf_memcmp()和其他访问eBPF程序栈上数据的函数使用 */</span></span><br><span class="line">  ARG_PTR_TO_MEM,  <span class="comment">/* 指向有效地址的指针(stack, packet, map value) */</span></span><br><span class="line">  ARG_PTR_TO_ARENA,</span><br><span class="line"></span><br><span class="line">  ARG_CONST_SIZE,  <span class="comment">/* 访问内存的字节数量 */</span></span><br><span class="line">  ARG_CONST_SIZE_OR_ZERO, <span class="comment">/* 访问内存的字节数量(可以是0) */</span></span><br><span class="line"></span><br><span class="line">  ARG_PTR_TO_CTX,  <span class="comment">/* 指向context */</span></span><br><span class="line">  ARG_ANYTHING,  <span class="comment">/* 任意 (初始化的) 参数 */</span></span><br><span class="line">  ...</span><br><span class="line">  ARG_PTR_TO_FUNC, <span class="comment">/* 指向bpf函数的指针 */</span></span><br><span class="line">  ARG_PTR_TO_STACK, <span class="comment">/* 指向eBPF栈(stack) */</span></span><br><span class="line">  ARG_PTR_TO_CONST_STR, <span class="comment">/* 指向一个空字符(\x00)截止的只读字符串 */</span></span><br><span class="line">  ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><code>ARG_CONST_MAP_PTR</code>: 该类型可以由宏<code>BPF_LD_MAP_FD</code>（出自bpf_insn.h，见上文）传入map的文件描述符得到</p>
+<p><code>ARG_PTR_TO_CTX</code>: 该类型为<code>BPF_REG_1</code>在运行前被赋值的类型</p>
+<ul>
+<li>返回值类型<code>bpf_return_type</code></li>
+</ul>
+<figure class="highlight c"><figcaption><span>部分</span><a target="_blank" rel="noopener" href="https://elixir.bootlin.com/linux/v6.13.7/source/include/linux/bpf.h#L809">完整版</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* helper函数返回值的类型 */</span></span><br><span class="line"><span class="class"><span class="keyword">enum</span> <span class="title">bpf_return_type</span> &#123;</span></span><br><span class="line">  RET_INTEGER,   <span class="comment">/*  函数返回整数(int)*/</span></span><br><span class="line">  RET_VOID,   <span class="comment">/* 函数什么也不返回 */</span></span><br><span class="line">  RET_PTR_TO_MAP_VALUE,  <span class="comment">/* 返回一个指向map元素值(value)的指针*/</span></span><br><span class="line">  RET_PTR_TO_SOCKET,  <span class="comment">/* 返回一个指向socket结构体的指针 */</span></span><br><span class="line">  RET_PTR_TO_TCP_SOCK,  <span class="comment">/* 返回一个指向tcp_sock结构体的指针 */</span></span><br><span class="line">  RET_PTR_TO_SOCK_COMMON,  <span class="comment">/* 返回一个指向sock_common结构体的指针 */</span></span><br><span class="line">  RET_PTR_TO_MEM,   <span class="comment">/* 返回一个指向内存的指针 */</span></span><br><span class="line">  RET_PTR_TO_MEM_OR_BTF_ID, <span class="comment">/* 返回一个指向合法地址的指针或一个btf_id */</span></span><br><span class="line">  RET_PTR_TO_BTF_ID,  <span class="comment">/* 返回一个指向btf_id的指针 */</span></span><br><span class="line">  __BPF_RET_TYPE_MAX,</span><br><span class="line">  ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>扩展部分增加了不少<code>RET_PTR_TO_XXX_OR_NULL</code>类型，本质上是在原类型的基础上增加了标志<code>PTR_MAYBE_NULL</code><br>这种类型在检验的时候会兼顾两种情况，在编写时要增加检验0的操作(if R0 &#x3D;&#x3D; 0 then exit)</p>
+</blockquote>
+<ul>
+<li>附加参数标志<code>bpf_type_flag</code></li>
+</ul>
+<figure class="highlight c"><figcaption><span>部分</span><a target="_blank" rel="noopener" href="https://elixir.bootlin.com/linux/v6.13.7/source/include/linux/bpf.h#L629">完整版</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">enum</span> <span class="title">bpf_type_flag</span> &#123;</span></span><br><span class="line">  <span class="comment">/* PTR 可能为 NULL. */</span></span><br><span class="line">  PTR_MAYBE_NULL  = BIT(<span class="number">0</span> + BPF_BASE_TYPE_BITS),</span><br><span class="line"></span><br><span class="line">  <span class="comment">/* MEM 是只读的。当在bpf_arg上应用时，表明该参数既可以是</span></span><br><span class="line"><span class="comment">    * 可变内存也可以是不可变内存.</span></span><br><span class="line"><span class="comment">    */</span></span><br><span class="line">  MEM_RDONLY  = BIT(<span class="number">1</span> + BPF_BASE_TYPE_BITS),</span><br><span class="line"></span><br><span class="line">  <span class="comment">/* MEM 指向 BPF 保留的环形缓冲区(ring buffer reservation). */</span></span><br><span class="line">  MEM_RINGBUF  = BIT(<span class="number">2</span> + BPF_BASE_TYPE_BITS),</span><br><span class="line"></span><br><span class="line">  <span class="comment">/* MEM 在用户空间内. */</span></span><br><span class="line">  MEM_USER  = BIT(<span class="number">3</span> + BPF_BASE_TYPE_BITS),</span><br><span class="line"></span><br><span class="line">  ...</span><br><span class="line"></span><br><span class="line">  <span class="comment">/* MEM 可以未初始化. */</span></span><br><span class="line">  MEM_UNINIT  = BIT(<span class="number">7</span> + BPF_BASE_TYPE_BITS),</span><br><span class="line"></span><br><span class="line">  ...</span><br><span class="line"></span><br><span class="line">  <span class="comment">/* 大小在编译期就明确. */</span></span><br><span class="line">  MEM_FIXED_SIZE  = BIT(<span class="number">10</span> + BPF_BASE_TYPE_BITS),</span><br><span class="line"></span><br><span class="line">  ...</span><br><span class="line"></span><br><span class="line">  <span class="comment">/* 内存必须在某些架构上对齐，</span></span><br><span class="line"><span class="comment">    * 与MEM_FIXED_SIZE一起使用.</span></span><br><span class="line"><span class="comment">    */</span></span><br><span class="line">  MEM_ALIGNED  = BIT(<span class="number">17</span> + BPF_BASE_TYPE_BITS),</span><br><span class="line"></span><br><span class="line">  <span class="comment">/* MEM 将要被写入, 经常和 MEM_UNINIT 一起使用. Non-presence</span></span><br><span class="line"><span class="comment">    * 不出现 MEM_WRITE 意味着 MEM 仅仅被读取. MEM_WRITE 在不与</span></span><br><span class="line"><span class="comment">    * MEM_UNINIT 搭配时意味着该内存需要初始化，因为它也会被读取.</span></span><br><span class="line"><span class="comment">    */</span></span><br><span class="line">  MEM_WRITE  = BIT(<span class="number">18</span> + BPF_BASE_TYPE_BITS),</span><br><span class="line"></span><br><span class="line">  __BPF_TYPE_FLAG_MAX,</span><br><span class="line">  __BPF_TYPE_LAST_FLAG = __BPF_TYPE_FLAG_MAX - <span class="number">1</span>,</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>这些参数可以以按位或的方式与<code>ARG_PTR_TO_xxx</code>组合</p>
+<p>在寄存器章节有讲到，<code>BPF_REG_1</code> ~ <code>BPF_REG_5</code>依次为Helper函数参数传递寄存器，<code>BPF_REG_0</code>存放Helper函数返回值，我们便可以根据参数编写正确的Helper调用。</p>
+<h3 id="Helper函数介绍"><a href="#Helper函数介绍" class="headerlink" title="Helper函数介绍"></a>Helper函数介绍</h3><p>map相关Helper函数</p>
+<ul>
+<li><code>bpf_map_lookup_elem</code></li>
+</ul>
+<figure class="highlight c"><figcaption><span>原型</span><a target="_blank" rel="noopener" href="https://elixir.bootlin.com/linux/v6.13.7/source/kernel/bpf/helpers.c#L45">出处</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">const</span> <span class="class"><span class="keyword">struct</span> <span class="title">bpf_func_proto</span> <span class="title">bpf_map_lookup_elem_proto</span> =</span> &#123;</span><br><span class="line">  .func  = bpf_map_lookup_elem,</span><br><span class="line">  .gpl_only = <span class="literal">false</span>,</span><br><span class="line">  .pkt_access = <span class="literal">true</span>,</span><br><span class="line">  .ret_type = RET_PTR_TO_MAP_VALUE_OR_NULL,</span><br><span class="line">  .arg1_type = ARG_CONST_MAP_PTR,</span><br><span class="line">  .arg2_type = ARG_PTR_TO_MAP_KEY,</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="type">void</span> *(* <span class="type">const</span> bpf_map_lookup_elem)(<span class="type">void</span> *<span class="built_in">map</span>, <span class="type">const</span> <span class="type">void</span> *key) = (<span class="type">void</span> *) <span class="number">1</span>;</span><br><span class="line"></span><br><span class="line">BPF_RAW_INSN(BPF_JMP | BPF_CALL, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, BPF_FUNC_map_lookup_elem)</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>arg1 类型见上文<br>arg2 类型为<code>ARG_PTR_TO_MAP_KEY</code>，事实上用一个指向栈的指针即可</p>
+</blockquote>
+<p>在map中根据key来查找value</p>
+<p>返回值为一个指向map value的指针或NULL（0），需要判断空指针操作</p>
+<ul>
+<li><code>bpf_map_update_elem</code></li>
+</ul>
+<figure class="highlight c"><figcaption><span>原型</span><a target="_blank" rel="noopener" href="https://elixir.bootlin.com/linux/v6.13.7/source/kernel/bpf/helpers.c#L62">出处</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">const</span> <span class="class"><span class="keyword">struct</span> <span class="title">bpf_func_proto</span> <span class="title">bpf_map_update_elem_proto</span> =</span> &#123;</span><br><span class="line">  .func  = bpf_map_update_elem,</span><br><span class="line">  .gpl_only = <span class="literal">false</span>,</span><br><span class="line">  .pkt_access = <span class="literal">true</span>,</span><br><span class="line">  .ret_type = RET_INTEGER,</span><br><span class="line">  .arg1_type = ARG_CONST_MAP_PTR,</span><br><span class="line">  .arg2_type = ARG_PTR_TO_MAP_KEY,</span><br><span class="line">  .arg3_type = ARG_PTR_TO_MAP_VALUE,</span><br><span class="line">  .arg4_type = ARG_ANYTHING,</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="title function_">long</span> <span class="params">(* <span class="type">const</span> bpf_map_update_elem)</span><span class="params">(<span class="type">void</span> *<span class="built_in">map</span>,</span></span><br><span class="line"><span class="params">                                          <span class="type">const</span> <span class="type">void</span> *key,</span></span><br><span class="line"><span class="params">                                          <span class="type">const</span> <span class="type">void</span> *value,</span></span><br><span class="line"><span class="params">                                          __u64 flags)</span> = (<span class="type">void</span> *) <span class="number">2</span>;</span><br><span class="line"></span><br><span class="line">BPF_RAW_INSN(BPF_JMP | BPF_CALL, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, BPF_FUNC_map_update_elem)</span><br></pre></td></tr></table></figure>
+
+<p>更新&#x2F;插入key-value对，flag参数为<code>BPF_NOEXIST</code>（key不存在时才会更新），<code>BPF_EXIST</code>（仅在key存在时更新）或<code>BPF_ANY</code>（两种情况均可）</p>
+<blockquote>
+<p>和用户态调用参数一致</p>
+<blockquote>
+<p>arg2, arg3类型均可以用指向栈的指针</p>
+</blockquote>
+</blockquote>
+<p>如果成功返回0,失败则返回一个负的错误号</p>
+<h3 id="完整示例程序"><a href="#完整示例程序" class="headerlink" title="完整示例程序"></a>完整示例程序</h3><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;./bpf_insn.h&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;asm/unistd_64.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;linux/bpf.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;linux/bpf_common.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stddef.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdint.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/socket.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;unistd.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> ptr_to_u64(val) (uint64_t)val</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> bpf(cmd, attr, size) syscall(__NR_bpf, cmd, attr, size)</span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> map_fd;</span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="type">int</span> <span class="title function_">bpf_create_map</span><span class="params">(<span class="keyword">enum</span> bpf_map_type map_type, <span class="type">unsigned</span> <span class="type">int</span> key_size,</span></span><br><span class="line"><span class="params">                          <span class="type">unsigned</span> <span class="type">int</span> value_size, <span class="type">unsigned</span> <span class="type">int</span> max_entries,</span></span><br><span class="line"><span class="params">                          <span class="type">unsigned</span> <span class="type">int</span> map_flags)</span> &#123;</span><br><span class="line">  <span class="class"><span class="keyword">union</span> <span class="title">bpf_attr</span> <span class="title">attr</span> =</span> &#123;</span><br><span class="line">      .map_type = map_type,</span><br><span class="line">      .key_size = key_size,</span><br><span class="line">      .value_size = value_size,</span><br><span class="line">      .max_entries = max_entries,</span><br><span class="line">      .map_flags = map_flags,</span><br><span class="line">  &#125;;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> bpf(BPF_MAP_CREATE, &amp;attr, <span class="keyword">sizeof</span>(attr));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="type">int</span> <span class="title function_">bpf_lookup_elem</span><span class="params">(<span class="type">int</span> fd, <span class="type">const</span> <span class="type">void</span> *key, <span class="type">void</span> *value)</span> &#123;</span><br><span class="line">  <span class="class"><span class="keyword">union</span> <span class="title">bpf_attr</span> <span class="title">attr</span> =</span> &#123;</span><br><span class="line">      .map_fd = fd,</span><br><span class="line">      .key = ptr_to_u64(key),</span><br><span class="line">      .value = ptr_to_u64(value),</span><br><span class="line">  &#125;;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> bpf(BPF_MAP_LOOKUP_ELEM, &amp;attr, <span class="keyword">sizeof</span>(attr));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="type">int</span> <span class="title function_">bpf_update_elem</span><span class="params">(<span class="type">int</span> fd, <span class="type">const</span> <span class="type">void</span> *key, <span class="type">const</span> <span class="type">void</span> *value,</span></span><br><span class="line"><span class="params">                           <span class="type">uint64_t</span> flags)</span> &#123;</span><br><span class="line">  <span class="class"><span class="keyword">union</span> <span class="title">bpf_attr</span> <span class="title">attr</span> =</span> &#123;</span><br><span class="line">      .map_fd = fd,</span><br><span class="line">      .key = ptr_to_u64(key),</span><br><span class="line">      .value = ptr_to_u64(value),</span><br><span class="line">      .flags = flags,</span><br><span class="line">  &#125;;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> bpf(BPF_MAP_UPDATE_ELEM, &amp;attr, <span class="keyword">sizeof</span>(attr));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> LOG_BUF_SIZE 0x800</span></span><br><span class="line"></span><br><span class="line"><span class="type">char</span> bpf_log_buf[LOG_BUF_SIZE];</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">bpf_prog_load_once</span><span class="params">()</span> &#123;</span><br><span class="line">  <span class="type">const</span> <span class="class"><span class="keyword">struct</span> <span class="title">bpf_insn</span> <span class="title">insns</span>[] =</span> &#123;</span><br><span class="line">      BPF_MOV64_REG(BPF_REG_9, BPF_REG_1),</span><br><span class="line"></span><br><span class="line">      BPF_LD_MAP_FD(BPF_REG_1, map_fd),</span><br><span class="line"></span><br><span class="line">      BPF_ST_MEM(BPF_DW, BPF_REG_10, <span class="number">-0x8</span>, <span class="number">0x0</span>),</span><br><span class="line">      BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),</span><br><span class="line">      BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, <span class="number">-0x8</span>),</span><br><span class="line">      BPF_RAW_INSN(BPF_JMP | BPF_CALL, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, BPF_FUNC_map_lookup_elem),</span><br><span class="line">      BPF_JMP_IMM(BPF_JNE, BPF_REG_0, <span class="number">0</span>, <span class="number">1</span>), BPF_EXIT_INSN(),</span><br><span class="line">      BPF_LDX_MEM(BPF_DW, BPF_REG_6, BPF_REG_0, <span class="number">0</span>), BPF_MOV64_IMM(BPF_REG_0, <span class="number">0</span>),</span><br><span class="line"></span><br><span class="line">      BPF_ALU64_IMM(BPF_ADD, BPF_REG_6, <span class="number">0x10</span>), BPF_LD_MAP_FD(BPF_REG_1, map_fd),</span><br><span class="line"></span><br><span class="line">      BPF_ST_MEM(BPF_DW, BPF_REG_10, <span class="number">-0x8</span>, <span class="number">0x1</span>),</span><br><span class="line"></span><br><span class="line">      BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),</span><br><span class="line">      BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, <span class="number">-0x8</span>),</span><br><span class="line"></span><br><span class="line">      BPF_STX_MEM(BPF_DW, BPF_REG_10, BPF_REG_6, <span class="number">-0x10</span>),</span><br><span class="line"></span><br><span class="line">      BPF_MOV64_REG(BPF_REG_3, BPF_REG_10),</span><br><span class="line">      BPF_ALU64_IMM(BPF_ADD, BPF_REG_3, <span class="number">-0x10</span>),</span><br><span class="line"></span><br><span class="line">      BPF_MOV64_IMM(BPF_REG_4, BPF_ANY),</span><br><span class="line"></span><br><span class="line">      BPF_RAW_INSN(BPF_JMP | BPF_CALL, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, BPF_FUNC_map_update_elem),</span><br><span class="line">      BPF_JMP_IMM(BPF_JEQ, BPF_REG_0, <span class="number">0</span>, <span class="number">1</span>), BPF_EXIT_INSN(),</span><br><span class="line"></span><br><span class="line">      BPF_MOV64_IMM(BPF_REG_0, <span class="number">0x0</span>), BPF_EXIT_INSN()&#125;;</span><br><span class="line"></span><br><span class="line">  <span class="class"><span class="keyword">union</span> <span class="title">bpf_attr</span> <span class="title">attr</span> =</span> &#123;</span><br><span class="line">      .prog_type = BPF_PROG_TYPE_SOCKET_FILTER,</span><br><span class="line">      .insns = ptr_to_u64(&amp;insns),</span><br><span class="line">      .insn_cnt = <span class="keyword">sizeof</span>(insns) / <span class="keyword">sizeof</span>(<span class="keyword">struct</span> bpf_insn),</span><br><span class="line">      .license = ptr_to_u64(<span class="string">&quot;GPL&quot;</span>),</span><br><span class="line">      .log_buf = ptr_to_u64(bpf_log_buf),</span><br><span class="line">      .log_size = LOG_BUF_SIZE,</span><br><span class="line">      .log_level = <span class="number">2</span>,</span><br><span class="line">  &#125;;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> bpf(BPF_PROG_LOAD, &amp;attr, <span class="keyword">sizeof</span>(attr));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> sockets[<span class="number">2</span>];</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">trigger1</span><span class="params">(<span class="type">int</span> prog_fd, <span class="type">uint64_t</span> *payload)</span> &#123;</span><br><span class="line">  socketpair(AF_UNIX, SOCK_DGRAM, <span class="number">0</span>, sockets);</span><br><span class="line">  setsockopt(sockets[<span class="number">1</span>], SOL_SOCKET, SO_ATTACH_BPF, &amp;prog_fd, <span class="keyword">sizeof</span>(prog_fd));</span><br><span class="line"></span><br><span class="line">  <span class="type">char</span> *buffer = (<span class="type">char</span> *)payload;</span><br><span class="line">  <span class="keyword">return</span> write(sockets[<span class="number">0</span>], buffer, <span class="keyword">sizeof</span>(buffer));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">(<span class="type">int</span> argc, <span class="type">char</span> *argv[])</span> &#123;</span><br><span class="line">  map_fd =</span><br><span class="line">      bpf_create_map(BPF_MAP_TYPE_ARRAY, <span class="keyword">sizeof</span>(<span class="type">int</span>), <span class="keyword">sizeof</span>(<span class="type">uint64_t</span>), <span class="number">0x2</span>, <span class="number">0</span>);</span><br><span class="line">  <span class="keyword">if</span> (map_fd &lt; <span class="number">0</span>) &#123;</span><br><span class="line">    <span class="built_in">puts</span>(<span class="string">&quot;Error while creating bpf map&quot;</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="type">int</span> key = <span class="number">0</span>;</span><br><span class="line">  <span class="type">uint64_t</span> value = <span class="number">0xaaaabbbb</span>;</span><br><span class="line">  bpf_update_elem(map_fd, &amp;key, &amp;value, BPF_ANY);</span><br><span class="line">  <span class="comment">// map[0] = 0xaaaabbbb</span></span><br><span class="line"></span><br><span class="line">  <span class="type">int</span> prog_fd = bpf_prog_load_once();</span><br><span class="line"></span><br><span class="line">  <span class="comment">// printf(&quot;log: \n%s\n&quot;, bpf_log_buf);</span></span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (prog_fd &lt; <span class="number">0</span>) &#123;</span><br><span class="line">    <span class="built_in">puts</span>(<span class="string">&quot;Error while loading bpf program&quot;</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="type">uint64_t</span> *payload = <span class="built_in">malloc</span>(<span class="number">0x20</span>);</span><br><span class="line"></span><br><span class="line">  <span class="type">int</span> ret = trigger1(prog_fd, payload);</span><br><span class="line">  <span class="keyword">if</span> (ret &lt; <span class="number">0</span>) &#123;</span><br><span class="line">    <span class="built_in">puts</span>(<span class="string">&quot;Error while trigger bpf program&quot;</span>);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  key = <span class="number">1</span>;</span><br><span class="line">  value = <span class="number">0x0</span>;</span><br><span class="line">  bpf_lookup_elem(map_fd, &amp;key, &amp;value);</span><br><span class="line">  <span class="built_in">printf</span>(<span class="string">&quot;find map[%d] = %#lx\n&quot;</span>, key, value);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>执行结果：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">bash-5.2$ ./test</span><br><span class="line">find map[1] = 0xaaaabbcb</span><br></pre></td></tr></table></figure>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/CTF/" rel="tag"># CTF</a>
+              <a href="/tags/pwn/" rel="tag"># pwn</a>
+              <a href="/tags/kernel/" rel="tag"># kernel</a>
+              <a href="/tags/eBPF/" rel="tag"># eBPF</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2025/03/31/2025tamuctf/" rel="prev" title="[TAMUctf 2025] Pwn write-up">
+      <i class="fa fa-chevron-left"></i> [TAMUctf 2025] Pwn write-up
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#eBPF%E4%BB%8B%E7%BB%8D"><span class="nav-number">1.</span> <span class="nav-text">eBPF介绍</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#eBPF%E5%9F%BA%E7%A1%80"><span class="nav-number">2.</span> <span class="nav-text">eBPF基础</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86"><span class="nav-number">2.1.</span> <span class="nav-text">基础知识</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%B0%83%E7%94%A8%E6%A8%A1%E6%9D%BF"><span class="nav-number">2.2.</span> <span class="nav-text">调用模板</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#eBPF%E6%8C%87%E4%BB%A4"><span class="nav-number">2.3.</span> <span class="nav-text">eBPF指令</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#eBPF%E6%8C%87%E4%BB%A4%E7%BC%96%E5%86%99"><span class="nav-number">2.4.</span> <span class="nav-text">eBPF指令编写</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Helper%E5%87%BD%E6%95%B0"><span class="nav-number">2.5.</span> <span class="nav-text">Helper函数</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BC%A0%E5%8F%82%E8%A7%84%E5%88%99"><span class="nav-number">2.5.1.</span> <span class="nav-text">传参规则</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Helper%E5%87%BD%E6%95%B0%E4%BB%8B%E7%BB%8D"><span class="nav-number">2.5.2.</span> <span class="nav-text">Helper函数介绍</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%8C%E6%95%B4%E7%A4%BA%E4%BE%8B%E7%A8%8B%E5%BA%8F"><span class="nav-number">2.5.3.</span> <span class="nav-text">完整示例程序</span></a></li></ol></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">NazrinDuck</p>
+  <div class="site-description" itemprop="description">Fâtih'in İstanbul'u fethettiği yaştasın!</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">10</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-name">tags</span>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2025</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">NazrinDuck</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
