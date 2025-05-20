@@ -20,22 +20,24 @@
     var CONFIG = {"hostname":"example.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
   </script>
 
-  <meta name="description" content="用来记载一些日常突然迸发的奇思妙想(?)&#x2F;冷笑话之类的东西   x86_64汇编就像塞尔维亚语，有两套正字法。塞尔维亚语有西里尔字母和拉丁字母两种格式，而x86_64汇编有Intel和AT＆T两种正字法。（这两种我都更偏向于使用前者）   GNU克罗地亚，Intel塞尔维亚说成立(bushi)，赛博巴尔干这一块   自然语言大多数字母系统都是大端序的，但阿拉伯字母是小端序。不过，阿拉伯">
+  <meta name="description" content="开端之前总算入门了Linux Kernel Pwn,想着找几个题练练手，注意到pwn.college里边有这样一个专题，于是就给它AK了  其实也就两三天的时间    注：本人所有利用手法均为非预期(?)，正常解法还是得看视频复现  不得不感叹漏洞利用技术发展之迅速，拿最新的利用手法打这种传统UAF简直降维打击   保密一下就不放Exp了，只说一下大概思路  所有Linux版本均为v6.7.9">
 <meta property="og:type" content="article">
-<meta property="og:title" content="自然语言&amp;赛博语言の奇思妙想">
-<meta property="og:url" content="http://example.com/2025/05/21/languages/index.html">
+<meta property="og:title" content="[pwn.college] Kernel Exploitation 解题记录">
+<meta property="og:url" content="http://example.com/2025/05/21/pwncollege-ker/index.html">
 <meta property="og:site_name" content="Blog de Назриндак">
-<meta property="og:description" content="用来记载一些日常突然迸发的奇思妙想(?)&#x2F;冷笑话之类的东西   x86_64汇编就像塞尔维亚语，有两套正字法。塞尔维亚语有西里尔字母和拉丁字母两种格式，而x86_64汇编有Intel和AT＆T两种正字法。（这两种我都更偏向于使用前者）   GNU克罗地亚，Intel塞尔维亚说成立(bushi)，赛博巴尔干这一块   自然语言大多数字母系统都是大端序的，但阿拉伯字母是小端序。不过，阿拉伯">
+<meta property="og:description" content="开端之前总算入门了Linux Kernel Pwn,想着找几个题练练手，注意到pwn.college里边有这样一个专题，于是就给它AK了  其实也就两三天的时间    注：本人所有利用手法均为非预期(?)，正常解法还是得看视频复现  不得不感叹漏洞利用技术发展之迅速，拿最新的利用手法打这种传统UAF简直降维打击   保密一下就不放Exp了，只说一下大概思路  所有Linux版本均为v6.7.9">
 <meta property="og:locale">
-<meta property="article:published_time" content="2025-05-20T16:17:19.000Z">
-<meta property="article:modified_time" content="2025-05-20T16:32:58.314Z">
+<meta property="og:image" content="http://example.com/images/pwncollege-ker/winner.jpg">
+<meta property="article:published_time" content="2025-05-20T16:43:05.000Z">
+<meta property="article:modified_time" content="2025-05-20T17:40:27.996Z">
 <meta property="article:author" content="NazrinDuck">
-<meta property="article:tag" content="Not CTF">
-<meta property="article:tag" content="language">
-<meta property="article:tag" content="relax">
+<meta property="article:tag" content="CTF">
+<meta property="article:tag" content="pwn">
+<meta property="article:tag" content="kernel">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/images/pwncollege-ker/winner.jpg">
 
-<link rel="canonical" href="http://example.com/2025/05/21/languages/">
+<link rel="canonical" href="http://example.com/2025/05/21/pwncollege-ker/">
 
 
 <script id="page-configurations">
@@ -48,7 +50,7 @@
   };
 </script>
 
-  <title>自然语言&赛博语言の奇思妙想 | Blog de Назриндак</title>
+  <title>[pwn.college] Kernel Exploitation 解题记录 | Blog de Назриндак</title>
   
 
 
@@ -159,7 +161,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2025/05/21/languages/">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2025/05/21/pwncollege-ker/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.gif">
@@ -172,7 +174,7 @@
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          自然语言&赛博语言の奇思妙想
+          [pwn.college] Kernel Exploitation 解题记录
         </h1>
 
         <div class="post-meta">
@@ -183,7 +185,7 @@
               <span class="post-meta-item-text">Posted on</span>
               
 
-              <time title="Created: 2025-05-21 00:17:19 / Modified: 00:32:58" itemprop="dateCreated datePublished" datetime="2025-05-21T00:17:19+08:00">2025-05-21</time>
+              <time title="Created: 2025-05-21 00:43:05 / Modified: 01:40:27" itemprop="dateCreated datePublished" datetime="2025-05-21T00:43:05+08:00">2025-05-21</time>
             </span>
 
           
@@ -197,27 +199,49 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <blockquote>
-<p>用来记载一些日常突然迸发的奇思妙想(?)&#x2F;冷笑话之类的东西</p>
-</blockquote>
-<ol>
-<li>x86_64汇编就像塞尔维亚语，有两套正字法。塞尔维亚语有西里尔字母和拉丁字母两种格式，而x86_64汇编有Intel和AT＆T两种正字法。（这两种我都更偏向于使用前者）</li>
-</ol>
+        <h2 id="开端"><a href="#开端" class="headerlink" title="开端"></a>开端</h2><p>之前总算入门了Linux Kernel Pwn,想着找几个题练练手，<del>注意到</del>pwn.college里边有这样一个专题，于是就给它AK了</p>
 <blockquote>
-<p>GNU克罗地亚，Intel塞尔维亚说成立(bushi)，赛博巴尔干这一块</p>
+<p>其实也就两三天的时间</p>
 </blockquote>
-<ol start="2">
-<li><p>自然语言大多数字母系统都是大端序的，但阿拉伯字母是小端序。不过，阿拉伯字母中的立即数（数字）还是大端序的。</p>
-</li>
-<li><p>大家好啊，我是黏着语</p>
-</li>
-</ol>
-<figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#[inline]</span></span><br><span class="line"><span class="keyword">pub</span> <span class="keyword">fn</span> <span class="title function_">try_open</span>(&amp;<span class="keyword">mut</span> <span class="keyword">self</span>) <span class="punctuation">-&gt;</span> io::<span class="type">Result</span>&lt;()&gt; &#123;</span><br><span class="line">  ...</span><br><span class="line">    <span class="keyword">self</span>.pathbuf = fs::<span class="title function_ invoke__">canonicalize</span>(&amp;<span class="keyword">self</span>.name)?;</span><br><span class="line">    <span class="keyword">self</span>.name = <span class="keyword">self</span></span><br><span class="line">        .pathbuf</span><br><span class="line">        .<span class="title function_ invoke__">file_name</span>()</span><br><span class="line">        .<span class="title function_ invoke__">unwrap</span>()</span><br><span class="line">        .<span class="title function_ invoke__">to_str</span>()</span><br><span class="line">        .<span class="title function_ invoke__">unwrap</span>()</span><br><span class="line">        .<span class="title function_ invoke__">to_string</span>();</span><br><span class="line"></span><br><span class="line">    <span class="title function_ invoke__">Ok</span>(())</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
+<p><img src="/images/pwncollege-ker/winner.jpg" alt=":)"></p>
 <blockquote>
-<p><del>出自本人某堆rust💩山</del></p>
+<p>注：本人所有利用手法均为非预期(?)，正常解法还是得看视频复现</p>
+<blockquote>
+<p>不得不感叹漏洞利用技术发展之迅速，拿最新的利用手法打这种传统UAF简直降维打击</p>
 </blockquote>
-<p>有灵感还会再更新</p>
+</blockquote>
+<p>保密一下就不放Exp了，只说一下大概思路</p>
+<blockquote>
+<p>所有Linux版本均为<strong>v6.7.9</strong></p>
+</blockquote>
+<h2 id="challenge1"><a href="#challenge1" class="headerlink" title="challenge1"></a>challenge1</h2><p>刚开始吓我一跳，自己用<code>kmem_cache_creat</code>造了一个slab，还以为要cross cache attack<del>（记着待会要用）</del><br>仔细一分析，发现是一种最简单的UAF,很长的越界写&#x2F;读，大小为kmalloc-512（如果是kmalloc分配的话），而且获取flag不用提权，它直接读到一个堆块里边了。<br>简单审计发现好像可以堆喷该文件（&#x2F;proc&#x2F;kheap），尝试发现确实可以，直接堆喷（其实两个就够了）文件，通过越界读读取相邻存放flag堆块里边的flag</p>
+<blockquote>
+<p>独立slab的好处就是你能比较清楚得把控堆块排列与个数，因为一般只有该模块使用不会有其他的资源抢夺，但肯定比不上用户态heap的精准把握</p>
+</blockquote>
+<h2 id="challenge2"><a href="#challenge2" class="headerlink" title="challenge2"></a>challenge2</h2><p>依旧是独立slab,这一次没有后门flag了，需要提权。<br>分析发现很长的越界写&#x2F;读直接cross-cache overflow即可，给了一个函数调用我还真不大清楚怎么用（）</p>
+<p>通过pgv堆喷order-1的pages,先free第一个页，堆喷文件&#x2F;proc&#x2F;kheap占用，再free第二个页，堆喷cred_jar占用，通过越界写直接改cred_jar，成功率很高</p>
+<blockquote>
+<p>堆喷cred_jar用<code>setuid(1000)</code>即可，但要注意数量。由于远程是比较接近实际环境的可能要多喷射一些，本地可以少一点</p>
+</blockquote>
+<h2 id="challenge3"><a href="#challenge3" class="headerlink" title="challenge3"></a>challenge3</h2><p>依旧是独立slab,这一次没有越界读写了，这就需要cross-cache attack了。<br>其余功能还是一样，漏洞只有UAF了</p>
+<p>通过构造特定数量的堆结构，并free特定堆块来填充满freelist，这样在遇到empty slab时，会调用<code>__slab_free</code>将其释放，从而得到一个page UAF原语</p>
+<p>利用思路还是堆喷cred_jar并用page UAF修改，成功率很高</p>
+<h2 id="challenge4-5"><a href="#challenge4-5" class="headerlink" title="challenge4 ~ 5"></a>challenge4 ~ 5</h2><blockquote>
+<p>本来想好好做一下，但是不会by pass kaslr,看了PPT才知道要通过oops获取内核信息（这就是为什么很多内核题都会有panic_on_oops的设定）</p>
+</blockquote>
+<p>challenge4多了kaslr，不影响任何步骤，利用同challenge3<br>challenge5看都没看直接打的，貌似是少了奇怪的函数调用，但我本身就不知道怎么利用（）</p>
+<h2 id="challenge6"><a href="#challenge6" class="headerlink" title="challenge6"></a>challenge6</h2><p>不是独立slab了，申请的堆块全都来自kmalloc-512，漏洞依旧是UAF，但是没有了读取功能，不过给了后门flag</p>
+<blockquote>
+<p>读都不用读，闭着眼睛往里写就行，只需一个字节</p>
+</blockquote>
+<p>有请<code>pipe_buffer</code>上场，给大家来点小小的page UAF震撼</p>
+<p>甚至不用堆喷cred_jar，直接堆喷flag即可（flag写入了一份kmalloc-512，多喷一点很容易取走UAF page的），用pipe读取</p>
+<h2 id="challenge7-8"><a href="#challenge7-8" class="headerlink" title="challenge7 ~ 8"></a>challenge7 ~ 8</h2><p>challenge7和challenge6功能和漏洞都一样，就是没有了后门flag，依然page UAF堆喷cred_jar，UAF改写即可，成功率挺高的</p>
+<p>challenge8好像在<code>copy_from_user</code>之前加了一个检验<code>__check_object_size</code>，然而page UAF才不管这些:)，利用手法同上</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><blockquote>
+<p>只能说太伟大了page UAF &amp; cross cache，这种利用手法过于震撼了，完完全全是通杀</p>
+</blockquote>
+<p>新方法没学到几个，只是练习了一下老方法，有空还得看一下提供的资料PPT和视频。</p>
 
     </div>
 
@@ -227,9 +251,9 @@
 
       <footer class="post-footer">
           <div class="post-tags">
-              <a href="/tags/Not-CTF/" rel="tag"># Not CTF</a>
-              <a href="/tags/language/" rel="tag"># language</a>
-              <a href="/tags/relax/" rel="tag"># relax</a>
+              <a href="/tags/CTF/" rel="tag"># CTF</a>
+              <a href="/tags/pwn/" rel="tag"># pwn</a>
+              <a href="/tags/kernel/" rel="tag"># kernel</a>
           </div>
 
         
@@ -238,13 +262,10 @@
         
     <div class="post-nav">
       <div class="post-nav-item">
-    <a href="/2025/05/14/ACTF-arandom/" rel="prev" title="[ACTF 2025] arandom复现">
-      <i class="fa fa-chevron-left"></i> [ACTF 2025] arandom复现
+    <a href="/2025/05/21/languages/" rel="prev" title="自然语言&赛博语言の奇思妙想">
+      <i class="fa fa-chevron-left"></i> 自然语言&赛博语言の奇思妙想
     </a></div>
-      <div class="post-nav-item">
-    <a href="/2025/05/21/pwncollege-ker/" rel="next" title="[pwn.college] Kernel Exploitation 解题记录">
-      [pwn.college] Kernel Exploitation 解题记录 <i class="fa fa-chevron-right"></i>
-    </a></div>
+      <div class="post-nav-item"></div>
     </div>
       </footer>
     
@@ -303,6 +324,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BC%80%E7%AB%AF"><span class="nav-number">1.</span> <span class="nav-text">开端</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#challenge1"><span class="nav-number">2.</span> <span class="nav-text">challenge1</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#challenge2"><span class="nav-number">3.</span> <span class="nav-text">challenge2</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#challenge3"><span class="nav-number">4.</span> <span class="nav-text">challenge3</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#challenge4-5"><span class="nav-number">5.</span> <span class="nav-text">challenge4 ~ 5</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#challenge6"><span class="nav-number">6.</span> <span class="nav-text">challenge6</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#challenge7-8"><span class="nav-number">7.</span> <span class="nav-text">challenge7 ~ 8</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">8.</span> <span class="nav-text">总结</span></a></li></ol></div>
       </div>
       <!--/noindex-->
 
