@@ -20,23 +20,24 @@
     var CONFIG = {"hostname":"example.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
   </script>
 
-  <meta name="description" content="第一个在赛时做出来的Kernel Pwn，太不容易了  防护检查.&#x2F;run.sh脚本中启用了smap,smep,kaslr防护，此外没什么特殊的文件系统经检验没有权限漏洞给了Kconfig，内核版本为Linux v6.6.91，较高版本，没有详细检查Kconfig中的条目比较平常的防护  Kconfig中的CONFIG_USER_NS没有打开，意味着我们无法开辟自己的命名空间，也就无法使用pgv">
+  <meta name="description" content="第一个在赛时做出来的Kernel Pwn，太不容易了  防护检查杂项检查.&#x2F;run.sh脚本中启用了smap,smep,kaslr防护，此外没什么特殊的文件系统经检验没有权限漏洞给了Kconfig，内核版本为Linux v6.6.91，较高版本，赛时没有详细检查Kconfig中的条目 Kconfig检查Kconfig中的CONFIG_USER_NS没有打开，意味着我们无法开辟自己的命名空间，也就">
 <meta property="og:type" content="article">
 <meta property="og:title" content="[京麒CTF 2025] mem writeup">
 <meta property="og:url" content="http://example.com/2025/05/26/2025jqctf-mem/index.html">
 <meta property="og:site_name" content="Blog de Назриндак">
-<meta property="og:description" content="第一个在赛时做出来的Kernel Pwn，太不容易了  防护检查.&#x2F;run.sh脚本中启用了smap,smep,kaslr防护，此外没什么特殊的文件系统经检验没有权限漏洞给了Kconfig，内核版本为Linux v6.6.91，较高版本，没有详细检查Kconfig中的条目比较平常的防护  Kconfig中的CONFIG_USER_NS没有打开，意味着我们无法开辟自己的命名空间，也就无法使用pgv">
+<meta property="og:description" content="第一个在赛时做出来的Kernel Pwn，太不容易了  防护检查杂项检查.&#x2F;run.sh脚本中启用了smap,smep,kaslr防护，此外没什么特殊的文件系统经检验没有权限漏洞给了Kconfig，内核版本为Linux v6.6.91，较高版本，赛时没有详细检查Kconfig中的条目 Kconfig检查Kconfig中的CONFIG_USER_NS没有打开，意味着我们无法开辟自己的命名空间，也就">
 <meta property="og:locale">
+<meta property="og:image" content="http://example.com/images/2025jqctf-mem/huawei.jpg">
 <meta property="og:image" content="http://example.com/images/2025jqctf-mem/win.jpg">
 <meta property="og:image" content="http://example.com/images/2025jqctf-mem/win2.jpg">
 <meta property="article:published_time" content="2025-05-25T16:08:05.000Z">
-<meta property="article:modified_time" content="2025-05-26T11:48:08.108Z">
+<meta property="article:modified_time" content="2025-05-26T12:39:55.663Z">
 <meta property="article:author" content="NazrinDuck">
 <meta property="article:tag" content="CTF">
 <meta property="article:tag" content="pwn">
 <meta property="article:tag" content="kernel">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="http://example.com/images/2025jqctf-mem/win.jpg">
+<meta name="twitter:image" content="http://example.com/images/2025jqctf-mem/huawei.jpg">
 
 <link rel="canonical" href="http://example.com/2025/05/26/2025jqctf-mem/">
 
@@ -186,7 +187,7 @@
               <span class="post-meta-item-text">Posted on</span>
               
 
-              <time title="Created: 2025-05-26 00:08:05 / Modified: 19:48:08" itemprop="dateCreated datePublished" datetime="2025-05-26T00:08:05+08:00">2025-05-26</time>
+              <time title="Created: 2025-05-26 00:08:05 / Modified: 20:39:55" itemprop="dateCreated datePublished" datetime="2025-05-26T00:08:05+08:00">2025-05-26</time>
             </span>
 
           
@@ -203,13 +204,26 @@
         <blockquote>
 <p>第一个在赛时做出来的Kernel Pwn，太不容易了</p>
 </blockquote>
-<h2 id="防护检查"><a href="#防护检查" class="headerlink" title="防护检查"></a>防护检查</h2><p><code>./run.sh</code>脚本中启用了smap,smep,kaslr防护，此外没什么特殊的<br>文件系统经检验没有权限漏洞<br>给了Kconfig，内核版本为<strong>Linux v6.6.91</strong>，较高版本，没有详细检查Kconfig中的条目<br>比较平常的防护</p>
+<h2 id="防护检查"><a href="#防护检查" class="headerlink" title="防护检查"></a>防护检查</h2><h3 id="杂项检查"><a href="#杂项检查" class="headerlink" title="杂项检查"></a>杂项检查</h3><p><code>./run.sh</code>脚本中启用了smap,smep,kaslr防护，此外没什么特殊的<br>文件系统经检验没有权限漏洞<br>给了Kconfig，内核版本为<strong>Linux v6.6.91</strong>，较高版本，赛时没有详细检查Kconfig中的条目</p>
+<h3 id="Kconfig检查"><a href="#Kconfig检查" class="headerlink" title="Kconfig检查"></a>Kconfig检查</h3><p>Kconfig中的<code>CONFIG_USER_NS</code>没有打开，意味着我们无法开辟自己的命名空间，也就无法使用<code>pgv</code>堆喷</p>
+<p>slab相关的防护：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">#</span><br><span class="line"># SLAB allocator options</span><br><span class="line">#</span><br><span class="line"># CONFIG_SLAB_DEPRECATED is not set</span><br><span class="line">CONFIG_SLUB=y</span><br><span class="line"># CONFIG_SLUB_TINY is not set</span><br><span class="line">CONFIG_SLAB_MERGE_DEFAULT=y</span><br><span class="line">CONFIG_SLAB_FREELIST_RANDOM=y</span><br><span class="line">CONFIG_SLAB_FREELIST_HARDENED=y</span><br><span class="line"># CONFIG_SLUB_STATS is not set</span><br><span class="line">CONFIG_SLUB_CPU_PARTIAL=y</span><br><span class="line">CONFIG_RANDOM_KMALLOC_CACHES=y</span><br><span class="line"># end of SLAB allocator options</span><br></pre></td></tr></table></figure>
+
 <blockquote>
-<p>Kconfig中的<code>CONFIG_USER_NS</code>没有打开，意味着我们无法开辟自己的命名空间，也就无法使用<code>pgv</code>堆喷</p>
+<p>注意<code>CONFIG_RANDOM_KMALLOC_CACHES=y</code>这个选项，之后会体现其作用</p>
 </blockquote>
+<p>在slab分配器的防护基本都打开了，意味着我们很难进行利用slab</p>
 <h2 id="逆向分析"><a href="#逆向分析" class="headerlink" title="逆向分析"></a>逆向分析</h2><p>IDA反编译发现程序很复杂，尤其是<code>memem_ioctl</code>函数，第一眼还以为被ollvm混淆了</p>
 <p>初始化函数创建了一个名为<code>/dev/mememe</code>的设备，并提供了<code>open</code>, <code>read</code>, <code>write</code>和<code>ioctl</code>等功能</p>
-<p>先分析<code>mememe_open</code>函数，发现程序调用了两个<code>kmalloc</code>，一个<code>alloc_page</code><br>前两个<code>kmalloc</code>貌似被加密了，无法静态分析其使用的是哪一个slab，后一个<code>alloc_page</code>申请的是order-0的page,并转成虚拟地址赋值给了一个地址偏移量。</p>
+<p>先分析<code>mememe_open</code>函数，发现程序调用了两个<code>kmalloc</code>，一个<code>alloc_page</code><br>前两个<code>kmalloc</code>貌似被随机化了，无法静态分析其使用的是哪一个slab，后一个<code>alloc_page</code>申请的是order-0的page,并转成虚拟地址赋值给了一个地址偏移量。</p>
+<blockquote>
+<p>事实上，这种缓解策略叫<strong>Random kmalloc caches</strong>，是前文<code>CONFIG_RANDOM_KMALLOC_CACHES=y</code>选项提供的<br>它的作用大概是为每个大小引入了多个通用 slab 缓存，在调用时通过返回地址（<code>ret_addr</code>）和随机数（<code>random_kmalloc_seed</code>）伪随机选择其中一个使用<br>效果如下所示</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">/ <span class="comment"># cat /proc/slabinfo</span></span><br><span class="line">slabinfo - version: 2.1</span><br><span class="line">...</span><br><span class="line">kmalloc-rnd-15-8k 0 0 8192 4 8 : tunables 0 0 0 : slabdata 0 0 0</span><br><span class="line">kmalloc-rnd-15-4k 8 8 4096 8 8 : tunables 0 0 0 : slabdata 1 1 0</span><br><span class="line">kmalloc-rnd-15-2k 32 32 2048 8 4 : tunables 0 0 0 : slabdata 4 4 0</span><br><span class="line">kmalloc-rnd-15-1k 32 32 1024 8 2 : tunables 0 0 0 : slabdata 4 4 0</span><br><span class="line">kmalloc-rnd-15-512 48 48 512 8 1 : tunables 0 0 0 : slabdata 6 6 0</span><br><span class="line">kmalloc-rnd-15-256 80 80 256 16 1 : tunables 0 0 0 : slabdata 5 5 0</span><br><span class="line">kmalloc-rnd-15-192 42 42 192 21 1 : tunables 0 0 0 : slabdata 2 2 0</span><br><span class="line">kmalloc-rnd-15-128 64 64 128 32 1 : tunables 0 0 0 : slabdata 2 2 0</span><br><span class="line">kmalloc-rnd-15-96 42 42 96 42 1 : tunables 0 0 0 : slabdata 1 1 0</span><br><span class="line">kmalloc-rnd-15-64 128 128 64 64 1 : tunables 0 0 0 : slabdata 2 2 0</span><br><span class="line">kmalloc-rnd-15-32 128 128 32 128 1 : tunables 0 0 0 : slabdata 1 1 0</span><br><span class="line">kmalloc-rnd-15-16 512 512 16 256 1 : tunables 0 0 0 : slabdata 2 2 0</span><br><span class="line">kmalloc-rnd-15-8 1024 1024 8 512 1 : tunables 0 0 0 : slabdata 2 2 0</span><br><span class="line">kmalloc-rnd-14-8k 4 4 8192 4 8 : tunables 0 0 0 : slabdata 1 1 0</span><br><span class="line">kmalloc-rnd-14-4k 8 8 4096 8 8 : tunables 0 0 0 : slabdata 1 1 0</span><br><span class="line">kmalloc-rnd-14-2k 16 16 2048 8 4 : tunables 0 0 0 : slabdata 2 2 0</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>该缓解方法还是由<strong>华为</strong>工程师<a target="_blank" rel="noopener" href="https://lwn.net/Articles/938246/">提出来的</a>，<del>华为为我增智慧了</del> <img src="/images/2025jqctf-mem/huawei.jpg" alt=":)"></p>
+</blockquote>
+</blockquote>
 <p>仔细分析发现程序中貌似有个结构体，<code>memset</code>函数之后有很多地址赋值语句，不同的偏移地址赋值代表着不同的字段，不过目前还不清楚它们大部分的功能。</p>
 <blockquote>
 <p>字段名称是之后补充的</p>
@@ -357,7 +371,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%98%B2%E6%8A%A4%E6%A3%80%E6%9F%A5"><span class="nav-number">1.</span> <span class="nav-text">防护检查</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%80%86%E5%90%91%E5%88%86%E6%9E%90"><span class="nav-number">2.</span> <span class="nav-text">逆向分析</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%BC%8F%E6%B4%9E%E5%88%A9%E7%94%A8"><span class="nav-number">3.</span> <span class="nav-text">漏洞利用</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%A9%E7%94%A8%E6%80%9D%E8%B7%AF"><span class="nav-number">3.1.</span> <span class="nav-text">利用思路</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%B5%9B%E6%97%B6%E7%AD%96%E7%95%A5"><span class="nav-number">3.2.</span> <span class="nav-text">赛时策略</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%94%B9%E8%BF%9B%E7%AD%96%E7%95%A5"><span class="nav-number">3.3.</span> <span class="nav-text">改进策略</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Exp"><span class="nav-number">4.</span> <span class="nav-text">Exp</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%B5%9B%E6%97%B6Exp"><span class="nav-number">4.1.</span> <span class="nav-text">赛时Exp</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%94%B9%E8%BF%9BExp"><span class="nav-number">4.2.</span> <span class="nav-text">改进Exp</span></a></li></ol></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%98%B2%E6%8A%A4%E6%A3%80%E6%9F%A5"><span class="nav-number">1.</span> <span class="nav-text">防护检查</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9D%82%E9%A1%B9%E6%A3%80%E6%9F%A5"><span class="nav-number">1.1.</span> <span class="nav-text">杂项检查</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Kconfig%E6%A3%80%E6%9F%A5"><span class="nav-number">1.2.</span> <span class="nav-text">Kconfig检查</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%80%86%E5%90%91%E5%88%86%E6%9E%90"><span class="nav-number">2.</span> <span class="nav-text">逆向分析</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%BC%8F%E6%B4%9E%E5%88%A9%E7%94%A8"><span class="nav-number">3.</span> <span class="nav-text">漏洞利用</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%A9%E7%94%A8%E6%80%9D%E8%B7%AF"><span class="nav-number">3.1.</span> <span class="nav-text">利用思路</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%B5%9B%E6%97%B6%E7%AD%96%E7%95%A5"><span class="nav-number">3.2.</span> <span class="nav-text">赛时策略</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%94%B9%E8%BF%9B%E7%AD%96%E7%95%A5"><span class="nav-number">3.3.</span> <span class="nav-text">改进策略</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Exp"><span class="nav-number">4.</span> <span class="nav-text">Exp</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%B5%9B%E6%97%B6Exp"><span class="nav-number">4.1.</span> <span class="nav-text">赛时Exp</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%94%B9%E8%BF%9BExp"><span class="nav-number">4.2.</span> <span class="nav-text">改进Exp</span></a></li></ol></li></ol></div>
       </div>
       <!--/noindex-->
 
