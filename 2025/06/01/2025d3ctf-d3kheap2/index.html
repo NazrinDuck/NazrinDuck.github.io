@@ -6,18 +6,18 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="HandheldFriendly" content="True">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
-    <meta name="description" content="从八点多痛苦调试到早上六点，不过最终终于做出来了  防护检查.&#x2F;run.sh脚本非常正式， 由于没有给Kconfig，没法直观地检查相关的设置，不过可以从调试时的信息推测出开了哪些防御 逆向分析逆向发现题目自己创建了一个slab cache,大小为0x800（相当于kmalloc-2k） 本题的漏洞仔细分析其实很明显，在kmem_cache_alloc的时候其实增加了两次计数 在设置为1后又自增">
+    <meta name="description" content="从八点多痛苦调试到早上六点，不过最终终于做出来了  防护检查.&#x2F;run.sh脚本非常正式，准备环境和清理环境的过程都提供了 由于没有给Kconfig，没法直观地检查相关的设置，不过可以从调试时的信息推测出开了哪些防御 逆向分析逆向发现题目自己创建了一个slab cache,大小为0x800（相当于kmalloc-2k） 本题的漏洞仔细分析其实很明显，在kmem_cache_alloc的时候其实增">
 <meta property="og:type" content="article">
 <meta property="og:title" content="[D^3CTF 2025] d3kheap2 writeup">
 <meta property="og:url" content="http://example.com/2025/06/01/2025d3ctf-d3kheap2/index.html">
 <meta property="og:site_name" content="Blog de Назриндак">
-<meta property="og:description" content="从八点多痛苦调试到早上六点，不过最终终于做出来了  防护检查.&#x2F;run.sh脚本非常正式， 由于没有给Kconfig，没法直观地检查相关的设置，不过可以从调试时的信息推测出开了哪些防御 逆向分析逆向发现题目自己创建了一个slab cache,大小为0x800（相当于kmalloc-2k） 本题的漏洞仔细分析其实很明显，在kmem_cache_alloc的时候其实增加了两次计数 在设置为1后又自增">
+<meta property="og:description" content="从八点多痛苦调试到早上六点，不过最终终于做出来了  防护检查.&#x2F;run.sh脚本非常正式，准备环境和清理环境的过程都提供了 由于没有给Kconfig，没法直观地检查相关的设置，不过可以从调试时的信息推测出开了哪些防御 逆向分析逆向发现题目自己创建了一个slab cache,大小为0x800（相当于kmalloc-2k） 本题的漏洞仔细分析其实很明显，在kmem_cache_alloc的时候其实增">
 <meta property="og:locale">
 <meta property="og:image" content="http://example.com/images/2025d3ctf-d3kheap2/win.jpg">
 <meta property="og:image" content="http://example.com/images/2025d3ctf-d3kheap2/too_short.jpg">
 <meta property="article:published_time" content="2025-05-31T16:20:04.000Z">
-<meta property="article:modified_time" content="2025-06-05T16:42:44.033Z">
-<meta property="article:author" content="NazrinDuck">
+<meta property="article:modified_time" content="2025-10-16T15:38:27.515Z">
+<meta property="article:author" content="NázrinKacsa">
 <meta property="article:tag" content="CTF">
 <meta property="article:tag" content="pwn">
 <meta property="article:tag" content="kernel">
@@ -97,6 +97,8 @@
     <span id="actions">
       <ul>
         
+        <li><a class="icon" aria-label="Previous post" href="/2025/10/16/2025ycb/"><i class="fa-solid fa-chevron-left" aria-hidden="true" onmouseover="$('#i-prev').toggle();" onmouseout="$('#i-prev').toggle();"></i></a></li>
+        
         
         <li><a class="icon" aria-label="Next post" href="/2025/05/26/2025jqctf-mem/"><i class="fa-solid fa-chevron-right" aria-hidden="true" onmouseover="$('#i-next').toggle();" onmouseout="$('#i-next').toggle();"></i></a></li>
         
@@ -148,7 +150,7 @@
 
     <div class="meta">
       <span class="author p-author h-card" itemprop="author" itemscope itemtype="http://schema.org/Person">
-        <span class="p-name" itemprop="name">NazrinDuck</span>
+        <span class="p-name" itemprop="name">NázrinKacsa</span>
       </span>
       
     <div class="postdate">
@@ -179,7 +181,7 @@
     <blockquote>
 <p>从八点多痛苦调试到早上六点，不过最终终于做出来了</p>
 </blockquote>
-<h2 id="防护检查"><a href="#防护检查" class="headerlink" title="防护检查"></a>防护检查</h2><p><code>./run.sh</code>脚本非常正式，</p>
+<h2 id="防护检查"><a href="#防护检查" class="headerlink" title="防护检查"></a>防护检查</h2><p><code>./run.sh</code>脚本非常正式，准备环境和清理环境的过程都提供了</p>
 <p>由于没有给Kconfig，没法直观地检查相关的设置，不过可以从调试时的信息推测出开了哪些防御</p>
 <h2 id="逆向分析"><a href="#逆向分析" class="headerlink" title="逆向分析"></a>逆向分析</h2><p>逆向发现题目自己创建了一个slab cache,大小为0x800（相当于kmalloc-2k）</p>
 <p>本题的漏洞仔细分析其实很明显，在<code>kmem_cache_alloc</code>的时候其实增加了两次计数</p>
@@ -288,7 +290,7 @@
     
     
     2016-2025
-    NazrinDuck
+    NázrinKacsa
   </div>
   <div class="footer-right">
     <nav>
