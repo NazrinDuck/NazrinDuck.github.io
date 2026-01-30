@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
+    <meta name="description" content="会议总结[PKU] 智能化漏洞挖掘与渗透测试&amp;智能化网络对抗问题探讨背景DARPA, AIxCC挑战赛取得里程碑式突破，展现自主发现0day漏洞的能力 XBOW 自主渗透产品登上HackerOne排行榜第一名 但是主流智能体框架还不能完成长时间持续运行、逻辑复杂的渗透测试任务 三大结构性缺陷:大语言模型在渗透测试中面临的问题渗透测试是长时程、长依赖任务,后续突破往往依赖于早期微不足道的信息">
+<meta property="og:type" content="article">
+<meta property="og:title" content="第三届网络安全青训营总结">
+<meta property="og:url" content="http://example.com/2026/01/29/2026qxy/index.html">
+<meta property="og:site_name" content="Blog de Назриндак">
+<meta property="og:description" content="会议总结[PKU] 智能化漏洞挖掘与渗透测试&amp;智能化网络对抗问题探讨背景DARPA, AIxCC挑战赛取得里程碑式突破，展现自主发现0day漏洞的能力 XBOW 自主渗透产品登上HackerOne排行榜第一名 但是主流智能体框架还不能完成长时间持续运行、逻辑复杂的渗透测试任务 三大结构性缺陷:大语言模型在渗透测试中面临的问题渗透测试是长时程、长依赖任务,后续突破往往依赖于早期微不足道的信息">
+<meta property="og:locale">
+<meta property="og:image" content="http://example.com/images/2026qxy/ak.png">
+<meta property="article:published_time" content="2026-01-29T12:29:17.000Z">
+<meta property="article:modified_time" content="2026-01-30T08:10:33.177Z">
+<meta property="article:author" content="NázrinKacsa">
+<meta property="article:tag" content="CTF">
+<meta property="article:tag" content="Cyber Security">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/images/2026qxy/ak.png">
+    
+    
+      
+        
+          <link rel="shortcut icon" href="/images/favicon.ico">
+        
+      
+      
+        
+          <link rel="icon" type="image/png" href="/images/favicon-192x192.png" sizes="192x192">
+        
+      
+      
+        
+          <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+        
+      
+    
+    <!-- title -->
+    <title>第三届网络安全青训营总结</title>
+    <!-- async scripts -->
+    <!-- Google Analytics -->
+
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-86660611-1"></script>
+  <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'UA-86660611-1');
+  </script>
+
+
+    <!-- Umami Analytics -->
+
+
+    <!-- styles -->
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <!-- persian styles -->
+    
+    <!-- rss -->
+    
+    
+	<!-- mathjax -->
+	
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+<body class="max-width mx-auto px3 ltr">
+    
+      <div id="header-post">
+  <a id="menu-icon" href="#" aria-label="Menu"><i class="fa-solid fa-bars fa-lg"></i></a>
+  <a id="menu-icon-tablet" href="#" aria-label="Menu"><i class="fa-solid fa-bars fa-lg"></i></a>
+  <a id="top-icon-tablet" href="#" aria-label="Top" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');" style="display:none;"><i class="fa-solid fa-chevron-up fa-lg"></i></a>
+  <span id="menu">
+    <span id="nav">
+      <ul>
+        <!--
+       --><li><a href="/">Home</a></li><!--
+     --><!--
+       --><li><a href="/about/">About</a></li><!--
+     --><!--
+       --><li><a href="/archives/">Writing</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="https://github.com/NazrinDuck">Projects</a></li><!--
+     --><!--
+       --><li><a href="/tags">tags</a></li><!--
+     -->
+      </ul>
+    </span>
+    <br/>
+    <span id="actions">
+      <ul>
+        
+        
+        <li><a class="icon" aria-label="Next post" href="/2025/10/30/cve-2022-0847/"><i class="fa-solid fa-chevron-right" aria-hidden="true" onmouseover="$('#i-next').toggle();" onmouseout="$('#i-next').toggle();"></i></a></li>
+        
+        <li><a class="icon" aria-label="Back to top" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa-solid fa-chevron-up" aria-hidden="true" onmouseover="$('#i-top').toggle();" onmouseout="$('#i-top').toggle();"></i></a></li>
+        <li><a class="icon" aria-label="Share post" href="#"><i class="fa-solid fa-share-alt" aria-hidden="true" onmouseover="$('#i-share').toggle();" onmouseout="$('#i-share').toggle();" onclick="$('#share').toggle();return false;"></i></a></li>
+      </ul>
+      <span id="i-prev" class="info" style="display:none;">Previous post</span>
+      <span id="i-next" class="info" style="display:none;">Next post</span>
+      <span id="i-top" class="info" style="display:none;">Back to top</span>
+      <span id="i-share" class="info" style="display:none;">Share post</span>
+    </span>
+    <br/>
+    <div id="share" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://example.com/2026/01/29/2026qxy/"><i class="fab fa-facebook " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://example.com/2026/01/29/2026qxy/&text=第三届网络安全青训营总结"><i class="fab fa-twitter " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://example.com/2026/01/29/2026qxy/&title=第三届网络安全青训营总结"><i class="fab fa-linkedin " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://example.com/2026/01/29/2026qxy/&is_video=false&description=第三届网络安全青训营总结"><i class="fab fa-pinterest " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=第三届网络安全青训营总结&body=Check out this article: http://example.com/2026/01/29/2026qxy/"><i class="fa-solid fa-envelope " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://example.com/2026/01/29/2026qxy/&title=第三届网络安全青训营总结"><i class="fab fa-get-pocket " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://example.com/2026/01/29/2026qxy/&title=第三届网络安全青训营总结"><i class="fab fa-reddit " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://example.com/2026/01/29/2026qxy/&title=第三届网络安全青训营总结"><i class="fab fa-stumbleupon " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://example.com/2026/01/29/2026qxy/&title=第三届网络安全青训营总结"><i class="fab fa-digg " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://example.com/2026/01/29/2026qxy/&name=第三届网络安全青训营总结&description="><i class="fab fa-tumblr " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://example.com/2026/01/29/2026qxy/&t=第三届网络安全青训营总结"><i class="fab fa-hacker-news " aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+    
+    
+      <div id="toc">
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BC%9A%E8%AE%AE%E6%80%BB%E7%BB%93"><span class="toc-number">1.</span> <span class="toc-text">会议总结</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#PKU-%E6%99%BA%E8%83%BD%E5%8C%96%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E4%B8%8E%E6%B8%97%E9%80%8F%E6%B5%8B%E8%AF%95-%E6%99%BA%E8%83%BD%E5%8C%96%E7%BD%91%E7%BB%9C%E5%AF%B9%E6%8A%97%E9%97%AE%E9%A2%98%E6%8E%A2%E8%AE%A8"><span class="toc-number">1.1.</span> <span class="toc-text">[PKU] 智能化漏洞挖掘与渗透测试&amp;智能化网络对抗问题探讨</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%83%8C%E6%99%AF"><span class="toc-number">1.1.1.</span> <span class="toc-text">背景</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%B8%89%E5%A4%A7%E7%BB%93%E6%9E%84%E6%80%A7%E7%BC%BA%E9%99%B7-%E5%A4%A7%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E5%9C%A8%E6%B8%97%E9%80%8F%E6%B5%8B%E8%AF%95%E4%B8%AD%E9%9D%A2%E4%B8%B4%E7%9A%84%E9%97%AE%E9%A2%98"><span class="toc-number">1.1.2.</span> <span class="toc-text">三大结构性缺陷:大语言模型在渗透测试中面临的问题</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E9%9A%BE%E7%82%B9%E4%B8%8E%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88"><span class="toc-number">1.1.3.</span> <span class="toc-text">难点与解决方案</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%A5%87%E5%AE%89%E4%BF%A1-%E4%BE%9B%E5%BA%94%E9%93%BE%E5%AE%89%E5%85%A8"><span class="toc-number">1.2.</span> <span class="toc-text">[奇安信] 供应链安全</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%AF%86%E9%92%A5%E6%B3%84%E6%BC%8F%E6%A3%80%E6%B5%8B%E4%B8%8E%E5%A4%A7%E8%A7%84%E6%A8%A1%E6%B5%8B%E9%87%8F%E8%AF%84%E4%BC%B0"><span class="toc-number">1.2.1.</span> <span class="toc-text">密钥泄漏检测与大规模测量评估</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%BC%80%E6%BA%90%E7%94%9F%E6%80%81%E4%BE%9B%E5%BA%94%E9%93%BE%E5%AE%89%E5%85%A8%E9%A3%8E%E9%99%A9%E5%88%86%E6%9E%90"><span class="toc-number">1.2.2.</span> <span class="toc-text">开源生态供应链安全风险分析</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#Docker%E7%94%9F%E6%80%81%E5%AE%89%E5%85%A8%E6%80%A7%E5%A4%A7%E8%A7%84%E6%A8%A1%E6%B5%8B%E9%87%8F%E5%88%86%E6%9E%90"><span class="toc-number">1.2.3.</span> <span class="toc-text">Docker生态安全性大规模测量分析</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%B7%B2%E7%9F%A5%E8%BD%AF%E4%BB%B6%E6%BC%8F%E6%B4%9E%E7%9A%84%E5%BD%B1%E5%93%8D%E8%8C%83%E5%9B%B4%E5%88%86%E6%9E%90"><span class="toc-number">1.2.4.</span> <span class="toc-text">已知软件漏洞的影响范围分析</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Misc"><span class="toc-number">1.3.</span> <span class="toc-text">Misc</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#r3kapig"><span class="toc-number">1.3.1.</span> <span class="toc-text">r3kapig</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#Redbud"><span class="toc-number">1.3.2.</span> <span class="toc-text">Redbud</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#CTF-Web%E5%8E%86%E5%B9%B4%E9%A2%98%E5%9E%8B%E6%BC%94%E5%8F%98"><span class="toc-number">1.3.2.1.</span> <span class="toc-text">CTF Web历年题型演变</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E4%BB%8E%E7%AB%9E%E8%B5%9B%E5%88%B0%E7%A7%91%E7%A0%94"><span class="toc-number">1.3.2.2.</span> <span class="toc-text">从竞赛到科研</span></a></li></ol></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%AA%E4%BA%BA%E8%80%83%E6%A0%B8%E8%B5%9B"><span class="toc-number">2.</span> <span class="toc-text">个人考核赛</span></a></li></ol>
+      </div>
+    
+  </span>
+</div>
+
+    
+    <div class="content index py4 ">
+        
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+  <header>
+    
+    <h1 class="posttitle p-name" itemprop="name headline">
+        第三届网络安全青训营总结
+    </h1>
+
+
+
+    <div class="meta">
+      <span class="author p-author h-card" itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span class="p-name" itemprop="name">NázrinKacsa</span>
+      </span>
+      
+    <div class="postdate">
+      
+        <time datetime="2026-01-29T12:29:17.000Z" class="dt-published" itemprop="datePublished">2026-01-29</time>
+        
+      
+    </div>
+
+
+      
+
+      
+    <div class="article-tag">
+        <i class="fa-solid fa-tag"></i>
+        <a class="p-category" href="/tags/CTF/" rel="tag">CTF</a>, <a class="p-category" href="/tags/Cyber-Security/" rel="tag">Cyber Security</a>
+    </div>
+
+
+      <span id="busuanzi_container_page_pv">
+        本文总阅读量<span id="busuanzi_value_page_pv"></span>次
+      </span>
+    </div>
+  </header>
+  
+
+  <div class="content e-content" itemprop="articleBody">
+    <h2 id="会议总结"><a href="#会议总结" class="headerlink" title="会议总结"></a>会议总结</h2><h3 id="PKU-智能化漏洞挖掘与渗透测试-智能化网络对抗问题探讨"><a href="#PKU-智能化漏洞挖掘与渗透测试-智能化网络对抗问题探讨" class="headerlink" title="[PKU] 智能化漏洞挖掘与渗透测试&amp;智能化网络对抗问题探讨"></a>[PKU] 智能化漏洞挖掘与渗透测试&amp;智能化网络对抗问题探讨</h3><h4 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h4><p>DARPA, AIxCC挑战赛取得里程碑式突破，展现自主发现0day漏洞的能力</p>
+<p>XBOW 自主渗透产品登上HackerOne排行榜第一名</p>
+<p>但是主流智能体框架还不能完成长时间持续运行、逻辑复杂的渗透测试任务</p>
+<h4 id="三大结构性缺陷-大语言模型在渗透测试中面临的问题"><a href="#三大结构性缺陷-大语言模型在渗透测试中面临的问题" class="headerlink" title="三大结构性缺陷:大语言模型在渗透测试中面临的问题"></a>三大结构性缺陷:大语言模型在渗透测试中面临的问题</h4><p>渗透测试是长时程、长依赖任务,后续突破往往依赖于早期微不足道的信息点。而现有LLM存在三大结构性缺陷;</p>
+<ul>
+<li>记忆衰退(Memory Decay)<br>上下文窗口不足,会“忘记”或忽略信息流中间的关键细节。<br>无法持续追踪长周期渗透战略</li>
+<li>规划短视(Planning Myopia)<br>倾向于局部最优规划,而非实现长期、复杂的战略目标。<br>追求局部最优,忽视长期战略目标</li>
+<li>幻觉虚构(Hallucination)<br>生成与事实不符、无中生有或无法验证的信息,污染决策基础。<br>生成无效或有害的操作指令</li>
+</ul>
+<h4 id="难点与解决方案"><a href="#难点与解决方案" class="headerlink" title="难点与解决方案"></a>难点与解决方案</h4><p>漏洞信息缺少，自然语言描述，半结构化:</p>
+<ul>
+<li>环境感知 漏洞组合链发现与分析</li>
+<li>任务推理：思考与规划</li>
+<li>工具学习：封装明确输入输出的原子服务并提供MCP接口，智能体根据需求进行任务编排</li>
+</ul>
+<p>智能渗透测试框架：SecLine &#x3D;&gt; SecFlow</p>
+<h3 id="奇安信-供应链安全"><a href="#奇安信-供应链安全" class="headerlink" title="[奇安信] 供应链安全"></a>[奇安信] 供应链安全</h3><h4 id="密钥泄漏检测与大规模测量评估"><a href="#密钥泄漏检测与大规模测量评估" class="headerlink" title="密钥泄漏检测与大规模测量评估"></a>密钥泄漏检测与大规模测量评估</h4><p>源代码、配置和日志文件等文本中的密钥泄漏问题和风险</p>
+<ul>
+<li>在主流开源生态上发现了大量泄漏密钥的项目：Github(24.78%)、PyPI(7.47%)、WeChat(30.08%)</li>
+<li>其中<strong>36.5%<strong>的泄漏密钥仍然</strong>有效</strong>，<strong>23.7%<strong>与</strong>测试环境</strong>中的密钥相同</li>
+</ul>
+<h4 id="开源生态供应链安全风险分析"><a href="#开源生态供应链安全风险分析" class="headerlink" title="开源生态供应链安全风险分析"></a>开源生态供应链安全风险分析</h4><p>开源软件包管理分发环节的问题、风险及攻击</p>
+<ul>
+<li>在当前的软件包生态中发现了<strong>资源重用、资源差异、资源混淆</strong>三大类典型问题，并在此基础上识别出<strong>12</strong>个潜在攻击向量，其中<strong>6</strong>个为首次发现的攻击向量</li>
+</ul>
+<h4 id="Docker生态安全性大规模测量分析"><a href="#Docker生态安全性大规模测量分析" class="headerlink" title="Docker生态安全性大规模测量分析"></a>Docker生态安全性大规模测量分析</h4><p>Docker Hub生态中镜像安全性问题和风险</p>
+<ul>
+<li>采集了1200万个镜像仓库数据，识别分析了33,952个关键镜像</li>
+<li>发现了<strong>93.7%<strong>镜像包含</strong>已知漏洞</strong>，4,437个镜像泄漏了密钥，50个镜像存在应用配置错误，24个恶意镜像</li>
+</ul>
+<h4 id="已知软件漏洞的影响范围分析"><a href="#已知软件漏洞的影响范围分析" class="headerlink" title="已知软件漏洞的影响范围分析"></a>已知软件漏洞的影响范围分析</h4><p>npm开源生态上的已知软件漏洞影响范围分析</p>
+<ul>
+<li><p>发现现有基于SBOM&#x2F;包依赖关系的漏洞影响范围分析方法存在大量误报，提出了基于函数调用关系的细粒度漏洞影响范围分析方法<strong>VulTracer</strong></p>
+</li>
+<li><p>在npm生态上（3400万个包版本）的大规模分析表明，平均而言，现有工具的结果中**68.28%**为误报</p>
+</li>
+</ul>
+<h3 id="Misc"><a href="#Misc" class="headerlink" title="Misc"></a>Misc</h3><h4 id="r3kapig"><a href="#r3kapig" class="headerlink" title="r3kapig"></a>r3kapig</h4><p>通过<a target="_blank" rel="noopener" href="https://discord.com/">Discord</a>交流，每个题目单开一个频道交流；找CTFTime上 weight评分&gt;50&#x2F;知名队伍的比赛参加</p>
+<h4 id="Redbud"><a href="#Redbud" class="headerlink" title="Redbud"></a>Redbud</h4><p>竞赛体悟</p>
+<h5 id="CTF-Web历年题型演变"><a href="#CTF-Web历年题型演变" class="headerlink" title="CTF Web历年题型演变"></a>CTF Web历年题型演变</h5><ul>
+<li>16 - 19年：PHP为主，弱类型，SQL注入，LFI&#x2F;RFI，XSS与CSRF</li>
+<li>19 - 23年：新型语言，NodeJS&#x2F;Python&#x2F;Java，各种反序列化</li>
+<li>23 - 至今：更真实的场景，更复杂的绕过，更底层的求索；浏览器特性&#x2F;框架特性&#x2F;协议特性</li>
+</ul>
+<h5 id="从竞赛到科研"><a href="#从竞赛到科研" class="headerlink" title="从竞赛到科研"></a>从竞赛到科研</h5><p>协议层Web应用防火墙通用绕过漏洞发现：2024 IEEE S&amp;P</p>
+<ul>
+<li>针对HTTP协议设计了一套自动化测试框架，在主流商业WAF服务中发现大量HTTP协议层绕过漏洞</li>
+<li>攻击者可以利用这些漏洞突破WAF防护，实施SQL注入，log4jshell，命令注入，文件上传等攻击</li>
+</ul>
+<p>HTTP&#x2F;2协议漏洞发现：2026 NDSS</p>
+<p><a target="_blank" rel="noopener" href="https://www.ndss-symposium.org/wp-content/uploads/2025-1086-paper.pdf">https://www.ndss-symposium.org/wp-content/uploads/2025-1086-paper.pdf</a></p>
+<ul>
+<li>发现两类HTTP协议设计脆弱性</li>
+<li>HTTP2 Server Push和Signed HTTP Exchange</li>
+<li>影响大量浏览器和网站</li>
+</ul>
+<h2 id="个人考核赛"><a href="#个人考核赛" class="headerlink" title="个人考核赛"></a>个人考核赛</h2><p>最后一天有个个人考核赛，内容是每个方向一个选择题，一个简单题和一个中等题，有Pwn，Web, Crypto, Reverse和Misc五个方向，时间是从上午九点到下午一点。</p>
+<p>最终把Pwn和Misc AK了，拿下第三名</p>
+<p><img src="/../images/2026qxy/ak.png" alt="AK"></p>
+<p>题目本身而言不是很难，但是非常二括号的一点是不让用自己电脑，只能用机房电脑。本来以为能提供一些做题环境（例如Kali 虚拟机，各种逆向用&#x2F;流量分析用工具），结果只提供了一个ghidra和Java环境，而且Java还没有配置环境变量，需要啥东西都得自己现下载。万幸的是电脑开启了WSL环境，能比较好地配置Pwn题的环境。</p>
+<blockquote>
+<p>没注意电脑还开着360，还把我ghidra反编译功能给整虚无了，我还以为是程序问题嗯看汇编做了俩Pwn（Pwn逆向倒也不复杂），后来才发现是二括号360干的，气得我直接把360害死了</p>
+</blockquote>
+<p>前期一直在配Pwn的环境，直到Pwn2做了一部分才配置完成。Pwn1 是一个一般通过的栈溢出，Pwn2 是一个堆UAF但是缺少edit功能，不过可以通过unsorted bin的合并特性来进行UAF修改操作。Misc1 是一个Docker 镜像，解压然后寻找敏感信息即可。Misc2 联系Misc1 通过后者的一个加密去解密流量包中的内容，最后得到一个AES key，在线解密flag即可</p>
+<blockquote>
+<p>AES key一开始把1和l看混了死活解不出来得浪费了一个多小时，不过即使有时间Reverse估计也出不来</p>
+</blockquote>
+
+  </div>
+</article>
+
+
+    <div class="blog-post-comments">
+        <div id="utterances_thread">
+            <noscript>Please enable JavaScript to view the comments.</noscript>
+        </div>
+    </div>
+
+
+        
+          <div id="footer-post-container">
+  <div id="footer-post">
+
+    <div id="nav-footer" style="display: none">
+      <ul>
+        
+          <li><a href="/">Home</a></li>
+        
+          <li><a href="/about/">About</a></li>
+        
+          <li><a href="/archives/">Writing</a></li>
+        
+          <li><a target="_blank" rel="noopener" href="https://github.com/NazrinDuck">Projects</a></li>
+        
+          <li><a href="/tags">tags</a></li>
+        
+      </ul>
+    </div>
+
+    
+    
+      <div id="toc-footer" style="display: none">
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BC%9A%E8%AE%AE%E6%80%BB%E7%BB%93"><span class="toc-number">1.</span> <span class="toc-text">会议总结</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#PKU-%E6%99%BA%E8%83%BD%E5%8C%96%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98%E4%B8%8E%E6%B8%97%E9%80%8F%E6%B5%8B%E8%AF%95-%E6%99%BA%E8%83%BD%E5%8C%96%E7%BD%91%E7%BB%9C%E5%AF%B9%E6%8A%97%E9%97%AE%E9%A2%98%E6%8E%A2%E8%AE%A8"><span class="toc-number">1.1.</span> <span class="toc-text">[PKU] 智能化漏洞挖掘与渗透测试&amp;智能化网络对抗问题探讨</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%83%8C%E6%99%AF"><span class="toc-number">1.1.1.</span> <span class="toc-text">背景</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%B8%89%E5%A4%A7%E7%BB%93%E6%9E%84%E6%80%A7%E7%BC%BA%E9%99%B7-%E5%A4%A7%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E5%9C%A8%E6%B8%97%E9%80%8F%E6%B5%8B%E8%AF%95%E4%B8%AD%E9%9D%A2%E4%B8%B4%E7%9A%84%E9%97%AE%E9%A2%98"><span class="toc-number">1.1.2.</span> <span class="toc-text">三大结构性缺陷:大语言模型在渗透测试中面临的问题</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E9%9A%BE%E7%82%B9%E4%B8%8E%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88"><span class="toc-number">1.1.3.</span> <span class="toc-text">难点与解决方案</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%A5%87%E5%AE%89%E4%BF%A1-%E4%BE%9B%E5%BA%94%E9%93%BE%E5%AE%89%E5%85%A8"><span class="toc-number">1.2.</span> <span class="toc-text">[奇安信] 供应链安全</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%AF%86%E9%92%A5%E6%B3%84%E6%BC%8F%E6%A3%80%E6%B5%8B%E4%B8%8E%E5%A4%A7%E8%A7%84%E6%A8%A1%E6%B5%8B%E9%87%8F%E8%AF%84%E4%BC%B0"><span class="toc-number">1.2.1.</span> <span class="toc-text">密钥泄漏检测与大规模测量评估</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%BC%80%E6%BA%90%E7%94%9F%E6%80%81%E4%BE%9B%E5%BA%94%E9%93%BE%E5%AE%89%E5%85%A8%E9%A3%8E%E9%99%A9%E5%88%86%E6%9E%90"><span class="toc-number">1.2.2.</span> <span class="toc-text">开源生态供应链安全风险分析</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#Docker%E7%94%9F%E6%80%81%E5%AE%89%E5%85%A8%E6%80%A7%E5%A4%A7%E8%A7%84%E6%A8%A1%E6%B5%8B%E9%87%8F%E5%88%86%E6%9E%90"><span class="toc-number">1.2.3.</span> <span class="toc-text">Docker生态安全性大规模测量分析</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%B7%B2%E7%9F%A5%E8%BD%AF%E4%BB%B6%E6%BC%8F%E6%B4%9E%E7%9A%84%E5%BD%B1%E5%93%8D%E8%8C%83%E5%9B%B4%E5%88%86%E6%9E%90"><span class="toc-number">1.2.4.</span> <span class="toc-text">已知软件漏洞的影响范围分析</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Misc"><span class="toc-number">1.3.</span> <span class="toc-text">Misc</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#r3kapig"><span class="toc-number">1.3.1.</span> <span class="toc-text">r3kapig</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#Redbud"><span class="toc-number">1.3.2.</span> <span class="toc-text">Redbud</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#CTF-Web%E5%8E%86%E5%B9%B4%E9%A2%98%E5%9E%8B%E6%BC%94%E5%8F%98"><span class="toc-number">1.3.2.1.</span> <span class="toc-text">CTF Web历年题型演变</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E4%BB%8E%E7%AB%9E%E8%B5%9B%E5%88%B0%E7%A7%91%E7%A0%94"><span class="toc-number">1.3.2.2.</span> <span class="toc-text">从竞赛到科研</span></a></li></ol></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%AA%E4%BA%BA%E8%80%83%E6%A0%B8%E8%B5%9B"><span class="toc-number">2.</span> <span class="toc-text">个人考核赛</span></a></li></ol>
+      </div>
+    
+
+    <div id="share-footer" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://example.com/2026/01/29/2026qxy/"><i class="fab fa-facebook fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://example.com/2026/01/29/2026qxy/&text=第三届网络安全青训营总结"><i class="fab fa-twitter fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://example.com/2026/01/29/2026qxy/&title=第三届网络安全青训营总结"><i class="fab fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://example.com/2026/01/29/2026qxy/&is_video=false&description=第三届网络安全青训营总结"><i class="fab fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=第三届网络安全青训营总结&body=Check out this article: http://example.com/2026/01/29/2026qxy/"><i class="fa-solid fa-envelope fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://example.com/2026/01/29/2026qxy/&title=第三届网络安全青训营总结"><i class="fab fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://example.com/2026/01/29/2026qxy/&title=第三届网络安全青训营总结"><i class="fab fa-reddit fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://example.com/2026/01/29/2026qxy/&title=第三届网络安全青训营总结"><i class="fab fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://example.com/2026/01/29/2026qxy/&title=第三届网络安全青训营总结"><i class="fab fa-digg fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://example.com/2026/01/29/2026qxy/&name=第三届网络安全青训营总结&description="><i class="fab fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://example.com/2026/01/29/2026qxy/&t=第三届网络安全青训营总结"><i class="fab fa-hacker-news fa-lg" aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+
+    <div id="actions-footer">
+        <a id="menu" class="icon" href="#" onclick="$('#nav-footer').toggle();return false;"><i class="fa-solid fa-bars fa-lg" aria-hidden="true"></i> Menu</a>
+        
+          <a id="toc" class="icon" href="#" onclick="$('#toc-footer').toggle();return false;"><i class="fa-solid fa-list fa-lg" aria-hidden="true"></i> TOC</a>
+        
+        <a id="share" class="icon" href="#" onclick="$('#share-footer').toggle();return false;"><i class="fa-solid fa-share-alt fa-lg" aria-hidden="true"></i> Share</a>
+        <a id="top" style="display:none" class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa-solid fa-chevron-up fa-lg" aria-hidden="true"></i> Top</a>
+    </div>
+
+  </div>
+</div>
+
+        
+        <footer id="footer">
+  <div class="footer-left">
+    Copyright &copy;
+    
+    
+    2016-2026
+    NázrinKacsa
+  </div>
+  <div class="footer-right">
+    <nav>
+      <ul>
+        <!--
+       --><li><a href="/">Home</a></li><!--
+     --><!--
+       --><li><a href="/about/">About</a></li><!--
+     --><!--
+       --><li><a href="/archives/">Writing</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="https://github.com/NazrinDuck">Projects</a></li><!--
+     --><!--
+       --><li><a href="/tags">tags</a></li><!--
+     -->
+      </ul>
+      <ul>
+      
+        <!-- 不蒜子统计 -->
+        <span id="busuanzi_container_site_pv">
+          本站总访问量<span id="busuanzi_value_site_pv"></span>次
+        </span>
+        <span class="post-meta-divider">|</span>
+        <span id="busuanzi_container_site_uv" style='display:none'>
+          访客数<span id="busuanzi_value_site_uv"></span>人
+        </span>
+        <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+      
+    </ul>
+    </nav>
+  </div>
+</footer>
+
+    </div>
+    <!-- styles -->
+
+
+
+  <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" onload="this.onload=null;this.rel='stylesheet'"/>
+
+
+    <!-- jquery -->
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" crossorigin="anonymous"></script>
+
+
+
+
+<!-- clipboard -->
+
+  
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.7/clipboard.min.js" crossorigin="anonymous"></script>
+  
+  <script type="text/javascript">
+  $(function() {
+    // copy-btn HTML
+    var btn = "<span class=\"btn-copy tooltipped tooltipped-sw\" aria-label=\"Copy to clipboard!\">";
+    btn += '<i class="fa-regular fa-clone"></i>';
+    btn += '</span>';
+    // mount it!
+    $(".highlight table").before(btn);
+    var clip = new ClipboardJS('.btn-copy', {
+      text: function(trigger) {
+        return Array.from(trigger.nextElementSibling.querySelectorAll('.code')).reduce((str,it)=>str+it.innerText+'\n','')
+      }
+    });
+    clip.on('success', function(e) {
+      e.trigger.setAttribute('aria-label', "Copied!");
+      e.clearSelection();
+    })
+  })
+  </script>
+
+
+<script src="/js/main.js"></script>
+
+<!-- search -->
+
+<!-- Baidu Analytics -->
+
+  <script type="text/javascript">
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?2e6da3c375c8a87f5b664cea6d4cb29c";
+          var s = document.getElementsByTagName("script")[0];
+          s.parentNode.insertBefore(hm, s);
+        })();
+        </script>
+
+<!-- Cloudflare Analytics -->
+
+<!-- Disqus Comments -->
+
+<!-- utterances Comments -->
+
+    <script type="text/javascript">
+      var utterances_repo = 'NazrinDuck/NazrinDuck.github.io';
+      var utterances_issue_term = 'pathname';
+      var utterances_label = 'Comment';
+      var utterances_theme = 'github-dark';
+
+      (function(){
+          var script = document.createElement('script');
+
+          script.src = 'https://utteranc.es/client.js';
+          script.setAttribute('repo', utterances_repo);
+          script.setAttribute('issue-term', 'pathname');
+          script.setAttribute('label', utterances_label);
+          script.setAttribute('theme', utterances_theme);
+          script.setAttribute('crossorigin', 'anonymous');
+          script.async = true;
+          (document.getElementById('utterances_thread')).appendChild(script);
+      }());
+  </script>
+
+</body>
+</html>
